@@ -46,3 +46,40 @@ Construimos una terminal de investigación y seguimiento de criptomonedas para i
 
 ## Criterios de terminado
 Una tarea no está terminada solo porque la interfaz se vea bien. Debe cumplir el comportamiento solicitado, manejar errores y estados vacíos, funcionar en móvil y escritorio, pasar las comprobaciones disponibles y no introducir datos inventados ni secretos.
+
+
+## Sistema de diseño visual (SaaS Azul) y tokens de Tailwind
+La interfaz de My Crypto 2.0 sigue una estética de terminal SaaS azul técnico, oscuro y premium. La configuración de Tailwind (`tailwind.config.js`) es la **única fuente de verdad** de la paleta.
+
+### Reglas de convención visual
+1. **Definición única:** Todos los colores se declaran en `theme.extend.colors.crypto` en `tailwind.config.js`.
+2. **Consumo semántico en componentes:** Los componentes deben usar exclusivamente las clases semánticas `crypto.*` (ej. `bg-crypto-bg`, `bg-crypto-surface`, `bg-crypto-primary`, `text-crypto-text`, etc.). No usar valores hexadecimales arbitrarios ni clases ad-hoc.
+3. **Estilos globales limpios:** `src/index.css` no duplica colores ni define una paleta paralela; consume las directivas base de Tailwind.
+4. **Separación de marca vs finanzas:** El azul (`crypto.primary`, `crypto.accent`) es para marca, acciones y selecciones. El verde (`crypto.positive`) y el rojo (`crypto.negative`) se reservan estrictamente para variaciones y estados financieros, nunca como color de adorno.
+5. **Nuevos componentes:** Todo nuevo componente creado debe ceñirse a estos mismos tokens.
+
+### Paleta de tokens predefinida
+| Token | Valor Hex | Propósito | Clases Tailwind principales |
+|---|---|---|---|
+| `crypto.bg` | `#0B1020` | Fondo general de la terminal | `bg-crypto-bg` |
+| `crypto.surface` | `#111A2E` | Tarjetas, paneles y contenedores | `bg-crypto-surface` |
+| `crypto.surface-hover` | `#18243B` | Superficies interactivas y hover | `bg-crypto-surface-hover`, `hover:bg-crypto-surface-hover` |
+| `crypto.surface-raised` | `#1C2942` | Menús, inputs y elementos elevados | `bg-crypto-surface-raised` |
+| `crypto.border` | `#293750` | Bordes y separadores sutiles | `border-crypto-border` |
+| `crypto.primary` | `#3B82F6` | Marca azul, botones principales | `bg-crypto-primary`, `border-crypto-primary` |
+| `crypto.primary-hover` | `#2563EB` | Hover de botones y acciones primarias | `hover:bg-crypto-primary-hover` |
+| `crypto.primary-soft` | `#172D50` | Fondos azules tenues de selección | `bg-crypto-primary-soft` |
+| `crypto.accent` | `#60A5FA` | Enlaces, detalles y estados activos | `text-crypto-accent` |
+| `crypto.accent-strong` | `#93C5FD` | Acento destacado sobre fondo oscuro | `text-crypto-accent-strong` |
+| `crypto.text` | `#F1F5F9` | Texto principal de máxima legibilidad | `text-crypto-text` |
+| `crypto.text-secondary`| `#A7B4C8` | Subtítulos y textos secundarios | `text-crypto-text-secondary` |
+| `crypto.text-muted` | `#77869F` | Metadatos, etiquetas y cifras discretas | `text-crypto-text-muted` |
+| `crypto.positive` | `#22C55E` | Variaciones positivas (+24h) | `text-crypto-positive`, `bg-crypto-positive-soft` |
+| `crypto.negative` | `#F87171` | Variaciones negativas (-24h) | `text-crypto-negative`, `bg-crypto-negative-soft` |
+| `crypto.warning` | `#FBBF24` | Avisos y alertas moderadas | `text-crypto-warning` |
+| `crypto.info` | `#38BDF8` | Información de estado | `text-crypto-info` |
+
+# Comentarios
+Siempre añadir comentarios en el código para explicar el funcionamiento del mismo. Si es muy largo, añadir comentarios en cada función. y solo comentarios que sean necesarios sin llenar todo el código de comentarios y si el comentario ocupa solo una linea añadir con // y no con /* * */ si son varias lineas usar /* * */.
+
+

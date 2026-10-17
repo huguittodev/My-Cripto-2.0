@@ -8,7 +8,20 @@ export interface Cryptocurrency {
   market_cap_rank: number;
   price_change_percentage_24h: number;
   last_updated: string;
+  total_volume?: number;
+  high_24h?: number;
+  low_24h?: number;
+  circulating_supply?: number;
 }
 
-// Esto nos servirá para el estado global de la lista
+// Lista tipada de criptomonedas
 export type CryptoList = Cryptocurrency[];
+
+// Resumen del mercado global devuelto por CoinGecko /global
+export interface GlobalMarketData {
+  total_market_cap_eur: number;
+  total_volume_eur: number;
+  btc_dominance: number;
+  market_cap_change_percentage_24h: number;
+  updated_at: number;
+}
