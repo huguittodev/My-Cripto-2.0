@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   getTopCoins,
   getGlobalMarketData,
+  getCoinMarketChart,
+  clearChartCache,
   RateLimitError,
   HttpError,
   NetworkError,
@@ -200,3 +202,146 @@ describe("getGlobalMarketData - API Service", () => {
     await expect(getGlobalMarketData()).rejects.toThrow(UnexpectedDataError);
   });
 });
+
+describe("getCoinMarketChart - API Service", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    clearChartCache();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    clearChartCache();
+  });
+
+  it("debe retornar los datos históricos normalizados cuando la respuesta es válida (200 OK)", async () => {
+    const mockChartResponse = {
+      prices: [
+        [1729200000000, 50000],
+        [1729203600000, 55000],
+        [1729207200000, 60000],
+      ],
+      market_caps: [[1729200000000, 1000000000]],
+      total_volumes: [[1729200000000, 50000000]],
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockChartResponse),
+    } as unknown as Response);
+
+    const result = await getCoinMarketChart({
+      coinId: "bitcoin",
+      days: 1,
+    });
+
+    expect(result.coinId).toBe("bitcoin");
+    expect(result.days).toBe(1);
+    expect(result.points).toHaveLength(3);
+    expect(result.points[0]).toEqual({ timestamp: 1729200000000, price: 50000 });
+    expect(result.points[2]).toEqual({ timestamp: 1729207200000, price: 60000 });
+    expect(result.performance.isValid).toBe(true);
+    expect(result.performance.startPrice).toBe(50000);
+    expect(result.performance.endPrice).toBe(60000);
+    expect(result.performance.absoluteChange).toBe(10000);
+    expect(result.performance.percentageChange).toBe(20);
+    expect(result.performance.isPositive).toBe(true);
+    expect(result.minPrice).toBe(50000);
+    expect(result.maxPrice).toBe(60000);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/coins/bitcoin/market_chart?vs_currency=eur&days=1"),
+      expect.anything(),
+    );
+  });
+
+  it("debe reutilizar la caché en memoria y no repetir la llamada fetch", async () => {
+    const mockChartResponse = {
+      prices: [
+        [1729200000000, 2000],
+        [1729203600000, 2100],
+      ],
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockChartResponse),
+    } as unknown as Response);
+
+    // Primera llamada (acude a la red)
+    const result1 = await getCoinMarketChart({ coinId: "ethereum", days: 7 });
+    expect(result1.points).toHaveLength(2);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+
+    // Segunda llamada idéntica (debe servirse desde caché)
+    const result2 = await getCoinMarketChart({ coinId: "ethereum", days: 7 });
+    expect(result2).toEqual(result1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1); // No vuelve a invocar fetch
+
+    // Tercera llamada con ignoreCache: true (obliga a consultar de nuevo)
+    await getCoinMarketChart({ coinId: "ethereum", days: 7, ignoreCache: true });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("debe lanzar RateLimitError si /market_chart responde con HTTP 429", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+    } as unknown as Response);
+
+    await expect(
+      getCoinMarketChart({ coinId: "solana", days: 30 }),
+    ).rejects.toThrow(RateLimitError);
+  });
+
+  it("debe lanzar HttpError si el servidor responde con 500", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    } as unknown as Response);
+
+    await expect(
+      getCoinMarketChart({ coinId: "cardano", days: 90 }),
+    ).rejects.toThrow(HttpError);
+  });
+
+  it("debe lanzar NetworkError si ocurre un error de conexión", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+
+    await expect(
+      getCoinMarketChart({ coinId: "ripple", days: 365 }),
+    ).rejects.toThrow(NetworkError);
+  });
+
+  it("debe lanzar UnexpectedDataError si la respuesta no tiene la propiedad prices esperada", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ error: "Coin not found" }),
+    } as unknown as Response);
+
+    await expect(
+      getCoinMarketChart({ coinId: "desconocido", days: 1 }),
+    ).rejects.toThrow(UnexpectedDataError);
+  });
+
+  it("debe propagar AbortError cuando la petición es cancelada intencionalmente", async () => {
+    const abortError = new DOMException("The user aborted a request.", "AbortError");
+    globalThis.fetch = vi.fn().mockRejectedValue(abortError);
+
+    await expect(
+      getCoinMarketChart({ coinId: "bitcoin", days: 1 }),
+    ).rejects.toThrow("The user aborted a request.");
+  });
+
+  it("debe rechazar llamadas con un identificador de activo vacío", async () => {
+    await expect(
+      getCoinMarketChart({ coinId: "", days: 1 }),
+    ).rejects.toThrow("El identificador del activo es obligatorio.");
+  });
+});
+

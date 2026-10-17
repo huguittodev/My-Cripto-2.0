@@ -80,20 +80,56 @@ export function formatPercentage(
 }
 
 /**
- * Formatea una fecha ISO a hora y fecha legible en español.
+ * Formatea una fecha ISO o timestamp numérico a fecha y hora legible en español.
  */
-export function formatDateTime(isoString: string | null | undefined): string {
-  if (!isoString) return "—";
+export function formatDateTime(
+  value: string | number | null | undefined,
+  includeSeconds = true,
+): string {
+  if (!value) return "—";
 
-  const date = new Date(isoString);
+  const date = typeof value === "number" ? new Date(value) : new Date(value);
   if (isNaN(date.getTime())) return "—";
 
-  return new Intl.DateTimeFormat("es-ES", {
+  const options: Intl.DateTimeFormatOptions = {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
+  };
+
+  if (includeSeconds) {
+    options.second = "2-digit";
+  }
+
+  return new Intl.DateTimeFormat("es-ES", options).format(date);
+}
+
+/**
+ * Formato compacto para etiquetas de eje temporal de gráficos (ej: 14:30 o 17 oct).
+ */
+export function formatChartAxisDate(timestamp: number, days: number): string {
+  if (!timestamp || isNaN(timestamp)) return "";
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return "";
+
+  if (days <= 1) {
+    return new Intl.DateTimeFormat("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  }
+
+  if (days <= 30) {
+    return new Intl.DateTimeFormat("es-ES", {
+      day: "numeric",
+      month: "short",
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat("es-ES", {
+    month: "short",
+    year: "2-digit",
   }).format(date);
 }
 

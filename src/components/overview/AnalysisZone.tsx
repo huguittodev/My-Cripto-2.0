@@ -1,7 +1,11 @@
 import type { FC } from "react";
 import type { Cryptocurrency, CryptoList } from "../../types/crypto";
 import { formatCurrency, formatCompactNumber, formatDateTime, formatRank } from "../../utils/formatters.ts";
-import { VariationBadge, StatusBadge } from "../ui/Badge.tsx";
+import { VariationBadge } from "../ui/Badge.tsx";
+import { useHistoricalChart } from "../../hooks/useHistoricalChart.ts";
+import { TimeframeSelector } from "../charts/TimeframeSelector.tsx";
+import { AssetPerformanceHeader } from "../charts/AssetPerformanceHeader.tsx";
+import { InteractivePriceChart } from "../charts/InteractivePriceChart.tsx";
 
 interface AnalysisZoneProps {
   selectedCoin: Cryptocurrency | null;
@@ -14,11 +18,23 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
   coins,
   onSelectCoin,
 }) => {
-  if (!selectedCoin && coins.length === 0) {
+  const activeCoin = selectedCoin || coins[0] || null;
+
+  // Hook para cargar y gestionar la serie histórica del activo seleccionado
+  const {
+    days,
+    setDays,
+    data: chartData,
+    loading: chartLoading,
+    errorMsg: chartError,
+    hoveredPoint,
+    setHoveredPoint,
+    refetch: refetchChart,
+  } = useHistoricalChart(activeCoin?.id);
+
+  if (!activeCoin) {
     return null;
   }
-
-  const activeCoin = selectedCoin || coins[0];
 
   // Calculamos los top movers dentro del conjunto real de datos
   const sortedByChange = [...coins].sort(
@@ -99,47 +115,36 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
           </div>
         </div>
 
-        {/* Espacio Estructurado para el Futuro Gráfico (Fase 5) */}
-        <div className="mt-3">
-          <div className="flex items-center justify-between gap-2 mb-3">
+        {/* Gráfico Histórico Interactivo y Controles de Periodo */}
+        <div className="mt-4 pt-3 border-t border-crypto-border/70 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-crypto-text-secondary font-mono">
-              Evolución de Precio
+              Evolución Histórica de Cotización
             </span>
-            {/* Timeframe controls (visual structure) */}
-            <div className="flex items-center gap-1 bg-crypto-surface-raised p-1 rounded-lg border border-crypto-border text-xs font-mono text-crypto-text-muted">
-              <span className="px-2 py-0.5 rounded bg-crypto-surface-hover text-crypto-accent font-semibold">24H</span>
-              <span className="px-2 py-0.5 opacity-60">7D</span>
-              <span className="px-2 py-0.5 opacity-60">1M</span>
-              <span className="px-2 py-0.5 opacity-60">1A</span>
-            </div>
+            <TimeframeSelector
+              selectedDays={days}
+              onSelectDays={setDays}
+              disabled={chartLoading}
+            />
           </div>
 
-          {/* Chart Canvas Area Placeholder */}
-          <div className="h-48 sm:h-56 rounded-xl bg-crypto-surface-hover/40 border border-dashed border-crypto-border flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-10 h-10 rounded-full bg-crypto-primary-soft border border-crypto-primary/30 flex items-center justify-center text-crypto-accent mb-3">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.8}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                />
-              </svg>
-            </div>
-            <h4 className="text-sm font-semibold text-crypto-text mb-1">
-              Gráfico Histórico Interactivo
-            </h4>
-            <p className="text-xs text-crypto-text-muted max-w-sm mb-3">
-              Espacio arquitectónico preparado para la visualización de velas y series temporales mediante CoinGecko /market_chart.
-            </p>
-            <StatusBadge variant="upcoming">Programado para Fase 5</StatusBadge>
-          </div>
+          {/* Cabecera dinámica con precio seleccionado, fecha y variación del periodo */}
+          <AssetPerformanceHeader
+            days={days}
+            performance={chartData?.performance || null}
+            hoveredPoint={hoveredPoint}
+            isLoading={chartLoading}
+          />
+
+          {/* Canvas SVG interactivo del gráfico con soporte de cursor */}
+          <InteractivePriceChart
+            data={chartData}
+            isLoading={chartLoading}
+            errorMsg={chartError}
+            onRetry={refetchChart}
+            hoveredPoint={hoveredPoint}
+            onHoverPoint={setHoveredPoint}
+          />
         </div>
       </div>
 

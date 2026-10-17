@@ -4,6 +4,7 @@ import {
   formatCompactNumber,
   formatPercentage,
   formatDateTime,
+  formatChartAxisDate,
   formatRank,
 } from "./formatters";
 
@@ -66,6 +67,29 @@ describe("formatters utils", () => {
       expect(formatDateTime(null)).toBe("—");
       expect(formatDateTime("fecha-invalida")).toBe("—");
     });
+
+    it("debe aceptar timestamps numéricos", () => {
+      const formatted = formatDateTime(1729200000000);
+      expect(formatted).not.toBe("—");
+      expect(formatted).toContain(":");
+    });
+  });
+
+  describe("formatChartAxisDate", () => {
+    it("debe formatear horas y minutos para periodos de 1 día", () => {
+      const formatted = formatChartAxisDate(1729200000000, 1);
+      expect(formatted).toMatch(/\d{2}:\d{2}/);
+    });
+
+    it("debe formatear día y mes para periodos de 7 a 30 días", () => {
+      const formatted = formatChartAxisDate(1729200000000, 7);
+      expect(formatted.length).toBeGreaterThan(2);
+    });
+
+    it("debe devolver cadena vacía ante timestamps inválidos", () => {
+      expect(formatChartAxisDate(0, 1)).toBe("");
+      expect(formatChartAxisDate(NaN, 1)).toBe("");
+    });
   });
 
   describe("formatRank", () => {
@@ -79,3 +103,4 @@ describe("formatters utils", () => {
     });
   });
 });
+

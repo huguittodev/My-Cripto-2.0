@@ -1,4 +1,14 @@
-import type { CryptoList, GlobalMarketData } from "../types/crypto";
+import type {
+  CryptoList,
+  GlobalMarketData,
+  TimeRangeDays,
+  HistoricalPriceData,
+} from "../types/crypto";
+import {
+  normalizeChartPoints,
+  calculatePeriodPerformance,
+  calculateMinMax,
+} from "../utils/calculations.ts";
 
 const BASE_URL = "https://api.coingecko.com/api/v3";
 
@@ -154,3 +164,120 @@ export const getGlobalMarketData = async (): Promise<GlobalMarketData> => {
     );
   }
 };
+
+// Caché en memoria para evitar peticiones redundantes y respetar los límites de CoinGecko
+const chartCache = new Map<string, { data: HistoricalPriceData; expiresAt: number }>();
+
+// Limpia la caché de gráficos históricos (útil para pruebas y recarga forzada)
+export const clearChartCache = (): void => {
+  chartCache.clear();
+};
+
+export interface GetMarketChartParams {
+  coinId: string;
+  days: TimeRangeDays;
+  vsCurrency?: string;
+  signal?: AbortSignal;
+  ignoreCache?: boolean;
+}
+
+/**
+ * Obtiene la serie temporal de precios históricos para un activo y periodo especificados.
+ * Endpoint: /coins/{id}/market_chart?vs_currency=eur&days={days}
+ */
+export const getCoinMarketChart = async ({
+  coinId,
+  days,
+  vsCurrency = "eur",
+  signal,
+  ignoreCache = false,
+}: GetMarketChartParams): Promise<HistoricalPriceData> => {
+  if (!coinId || typeof coinId !== "string" || coinId.trim() === "") {
+    throw new Error("El identificador del activo es obligatorio.");
+  }
+
+  const cacheKey = `${coinId.toLowerCase()}-${days}-${vsCurrency.toLowerCase()}`;
+
+  // Comprueba si existe una entrada válida en caché
+  if (!ignoreCache) {
+    const cached = chartCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `${BASE_URL}/coins/${encodeURIComponent(coinId.toLowerCase())}/market_chart?vs_currency=${encodeURIComponent(vsCurrency.toLowerCase())}&days=${days}`,
+      { signal },
+    );
+  } catch (error: unknown) {
+    // Si la petición fue abortada intencionalmente, relanza el error original
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    if (error instanceof TypeError) {
+      throw new NetworkError();
+    }
+    if (error instanceof Error) {
+      throw new NetworkError(`Error al consultar serie histórica: ${error.message}`);
+    }
+    throw new NetworkError();
+  }
+
+  if (response.status === 429) {
+    throw new RateLimitError();
+  }
+
+  if (!response.ok) {
+    throw new HttpError(response.status);
+  }
+
+  try {
+    const json: unknown = await response.json();
+
+    if (
+      typeof json !== "object" ||
+      json === null ||
+      !("prices" in json) ||
+      !Array.isArray((json as { prices: unknown }).prices)
+    ) {
+      throw new UnexpectedDataError(
+        "La respuesta de la API no contiene la serie de precios esperada.",
+      );
+    }
+
+    const rawPrices = (json as { prices: unknown[] }).prices;
+    const points = normalizeChartPoints(rawPrices);
+    const performance = calculatePeriodPerformance(points);
+    const { min: minPrice, max: maxPrice } = calculateMinMax(points);
+
+    const result: HistoricalPriceData = {
+      coinId: coinId.toLowerCase(),
+      days,
+      points,
+      performance,
+      minPrice,
+      maxPrice,
+    };
+
+    // TTL de caché: 60s para 24h (alta volatilidad), 300s para rangos mayores (7d, 30d, etc.)
+    const ttlMs = days === 1 ? 60 * 1000 : 300 * 1000;
+    chartCache.set(cacheKey, {
+      data: result,
+      expiresAt: Date.now() + ttlMs,
+    });
+
+    return result;
+  } catch (error: unknown) {
+    if (error instanceof UnexpectedDataError) {
+      throw error;
+    }
+    throw new UnexpectedDataError(
+      "Error al procesar la serie temporal de precios.",
+    );
+  }
+};
+
