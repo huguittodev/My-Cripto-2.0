@@ -10,7 +10,9 @@ import { MarketSparkline } from "../markets/MarketSparkline.tsx";
 import { MarketFiltersBar } from "../markets/MarketFiltersBar.tsx";
 import type { ViewMode } from "../markets/MarketFiltersBar.tsx";
 import { MarketPagination } from "../markets/MarketPagination.tsx";
+import { FavoriteButton } from "../common/FavoriteButton.tsx";
 import { useMarketExplorer } from "../../hooks/useMarketExplorer.ts";
+import { useWatchlist } from "../../hooks/useWatchlist.ts";
 
 interface MarketTableProps {
   selectedCoin: Cryptocurrency | null;
@@ -24,6 +26,7 @@ export const MarketTable: FC<MarketTableProps> = ({
   onCoinsLoaded,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const { isFavorite, toggleFavorite } = useWatchlist();
 
   const {
     filteredAndSortedCoins,
@@ -191,6 +194,9 @@ export const MarketTable: FC<MarketTableProps> = ({
           <table className="w-full text-left text-xs sm:text-sm">
             <thead className="bg-crypto-surface-raised/80 border-b border-crypto-border text-[11px] font-mono uppercase tracking-wider text-crypto-text-muted select-none">
               <tr>
+                {/* 0. Favorito */}
+                <th className="py-3 px-2 sm:px-3 text-center w-10">★</th>
+
                 {/* 1. Ranking */}
                 <th
                   onClick={() => handleSort("rank")}
@@ -298,6 +304,17 @@ export const MarketTable: FC<MarketTableProps> = ({
                         : "hover:bg-crypto-surface-hover/60"
                     }`}
                   >
+                    {/* 0. Favorito */}
+                    <td className="py-3.5 px-2 sm:px-3 text-center">
+                      <FavoriteButton
+                        coinId={coin.id}
+                        coinName={coin.name}
+                        isFavorite={isFavorite(coin.id)}
+                        onToggle={toggleFavorite}
+                        size="sm"
+                      />
+                    </td>
+
                     {/* 1. Ranking */}
                     <td className="py-3.5 px-3 sm:px-4 text-center font-mono text-xs text-crypto-text-muted">
                       {formatRank(coin.market_cap_rank)}

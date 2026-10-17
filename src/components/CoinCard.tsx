@@ -3,11 +3,15 @@ import type { Cryptocurrency } from "../types/crypto";
 import { formatCurrency, formatCompactNumber, formatRank } from "../utils/formatters.ts";
 import { VariationBadge } from "./ui/Badge.tsx";
 import { MarketSparkline } from "./markets/MarketSparkline.tsx";
+import { FavoriteButton } from "./common/FavoriteButton.tsx";
+import { useWatchlist } from "../hooks/useWatchlist.ts";
 
 interface CoinCardProps {
   coin: Cryptocurrency;
   isSelected?: boolean;
   onSelect?: (coin: Cryptocurrency) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (coinId: string) => void;
 }
 
 /**
@@ -18,7 +22,13 @@ export const CoinCard: FC<CoinCardProps> = ({
   coin,
   isSelected = false,
   onSelect,
+  isFavorite: propIsFavorite,
+  onToggleFavorite: propOnToggleFavorite,
 }) => {
+  const { isFavorite: hookIsFavorite, toggleFavorite: hookToggleFavorite } = useWatchlist();
+  const isFav = propIsFavorite !== undefined ? propIsFavorite : hookIsFavorite(coin.id);
+  const handleToggle = propOnToggleFavorite || hookToggleFavorite;
+
   const handleClick = () => {
     if (onSelect) {
       onSelect(coin);
@@ -62,9 +72,18 @@ export const CoinCard: FC<CoinCardProps> = ({
           </div>
         </div>
 
-        <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-crypto-surface-raised text-crypto-text-muted border border-crypto-border/60">
-          {formatRank(coin.market_cap_rank)}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-crypto-surface-raised text-crypto-text-muted border border-crypto-border/60">
+            {formatRank(coin.market_cap_rank)}
+          </span>
+          <FavoriteButton
+            coinId={coin.id}
+            coinName={coin.name}
+            isFavorite={isFav}
+            onToggle={handleToggle}
+            size="sm"
+          />
+        </div>
       </div>
 
       <div className="flex items-baseline justify-between mt-3">

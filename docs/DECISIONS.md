@@ -21,5 +21,10 @@ Registra aquí decisiones que afecten al producto y al código. No des por decid
 | 2026-10-17 | Tratamiento explícito de secciones no implementadas con tags "Próximamente" / "Fase X" | Transparencia de producto y no simular datos o funcionalidades inexistentes | Estructura de navegación lista para las fases posteriores |
 | 2026-10-17 | Establecimiento de sistema visual SaaS azul (#0B1020, #111A2E, #3B82F6, #60A5FA) | Reforzar la identidad de marca premium y homogeneizar el consumo de tokens en Tailwind | Los componentes usan directamente `bg-crypto-*`, `text-crypto-*` y `border-crypto-*` |
 | 2026-10-17 | Cartera manual y no custodial en MVP | Evitar credenciales y complejidad de seguridad | Sin claves privadas ni conexiones de trading |
+| 2026-10-18 | Cierre y validación formal de Fase 1 | Validar exhaustivamente la integración de mercado, gráficos y watchlist | 123 tests superados, build limpia y arquitectura documentada |
+| 2026-10-18 | Método FIFO para valoración de cartera y cálculo de P&L | Proporcionar una contabilidad de lotes rigurosa, trazable y estándar en finanzas | Separación estricta entre beneficio realizado y no realizado; asignación precisa de lotes antiguos |
+| 2026-10-18 | Validación estricta anti-posiciones cortas en operaciones de cartera | Prevenir inconsistencias financieras en un modelo de cartera no apalancada | No se permiten ventas superiores al saldo acumulado disponible |
+| 2026-10-18 | Persistencia versionada `my-crypto-portfolio-v1` en localStorage | Aislamiento y resiliencia ante errores de almacenamiento o JSON corrupto | Respaldo en memoria automático y desacoplamiento de la interfaz mediante hook |
+
 
 

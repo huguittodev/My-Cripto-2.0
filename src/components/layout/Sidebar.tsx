@@ -60,8 +60,7 @@ export const Sidebar: FC<SidebarProps> = ({
     {
       id: "markets",
       label: "Mercados",
-      phaseText: "Fase 4",
-      isImplemented: false,
+      isImplemented: true,
       icon: (active) => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -82,8 +81,7 @@ export const Sidebar: FC<SidebarProps> = ({
     {
       id: "watchlist",
       label: "Watchlist",
-      phaseText: "Fase 6",
-      isImplemented: false,
+      isImplemented: true,
       icon: (active) => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -104,8 +102,7 @@ export const Sidebar: FC<SidebarProps> = ({
     {
       id: "portfolio",
       label: "Mi cartera",
-      phaseText: "Fase 7",
-      isImplemented: false,
+      isImplemented: true,
       icon: (active) => (
         <svg
           xmlns="http://www.w3.org/2000/svg"

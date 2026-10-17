@@ -110,3 +110,78 @@ export interface SearchCoinResult {
   large: string;
 }
 
+// Estructura mínima versionada para persistencia de la watchlist en localStorage
+export interface WatchlistStoragePayload {
+  version: number;
+  coinIds: string[];
+  updatedAt: number;
+}
+
+// ==========================================
+// TIPOS DEL MOTOR DE CARTERA (PORTFOLIO ENGINE)
+// ==========================================
+
+// Tipo de operación: compra o venta
+export type TransactionType = "buy" | "sell";
+
+// Registro individual de una transacción en la cartera
+export interface Transaction {
+  id: string;
+  coinId: string;
+  type: TransactionType;
+  amount: number;
+  pricePerUnit: number;
+  fee: number;
+  timestamp: number;
+  notes?: string;
+  createdAt: number;
+}
+
+// Lote contable para el cálculo de coste por método FIFO
+export interface PortfolioLot {
+  id: string;
+  amount: number;
+  pricePerUnit: number;
+  fee: number;
+  timestamp: number;
+}
+
+// Posición agregada de un activo en la cartera
+export interface PortfolioPosition {
+  coinId: string;
+  coinSymbol?: string;
+  coinName?: string;
+  coinImage?: string;
+  amount: number;
+  totalCostBasis: number;
+  averageBuyPrice: number;
+  currentPrice: number | null;
+  currentValue: number | null;
+  unrealizedPnl: number | null;
+  unrealizedPnlPercentage: number | null;
+  realizedPnl: number;
+  totalFees: number;
+  allocationPercentage: number;
+}
+
+// Resumen macro de la cartera completa
+export interface PortfolioSummary {
+  totalCurrentValue: number;
+  totalCostBasis: number;
+  totalUnrealizedPnl: number;
+  totalUnrealizedPnlPercentage: number;
+  totalRealizedPnl: number;
+  totalFees: number;
+  hasUnavailablePrices: boolean;
+  positionCount: number;
+  transactionCount: number;
+}
+
+// Estructura versionada para persistencia de transacciones en localStorage
+export interface PortfolioStoragePayload {
+  version: number;
+  transactions: Transaction[];
+  updatedAt: number;
+}
+
+

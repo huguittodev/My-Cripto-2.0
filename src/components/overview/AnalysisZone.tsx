@@ -3,9 +3,11 @@ import type { Cryptocurrency, CryptoList } from "../../types/crypto";
 import { formatCurrency, formatCompactNumber, formatDateTime, formatRank } from "../../utils/formatters.ts";
 import { VariationBadge } from "../ui/Badge.tsx";
 import { useHistoricalChart } from "../../hooks/useHistoricalChart.ts";
+import { useWatchlist } from "../../hooks/useWatchlist.ts";
 import { TimeframeSelector } from "../charts/TimeframeSelector.tsx";
 import { AssetPerformanceHeader } from "../charts/AssetPerformanceHeader.tsx";
 import { InteractivePriceChart } from "../charts/InteractivePriceChart.tsx";
+import { FavoriteButton } from "../common/FavoriteButton.tsx";
 
 interface AnalysisZoneProps {
   selectedCoin: Cryptocurrency | null;
@@ -19,6 +21,7 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
   onSelectCoin,
 }) => {
   const activeCoin = selectedCoin || coins[0] || null;
+  const { isFavorite, toggleFavorite } = useWatchlist();
 
   // Hook para cargar y gestionar la serie histórica del activo seleccionado
   const {
@@ -66,6 +69,13 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
                 <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-crypto-primary-soft text-crypto-accent border border-crypto-accent/25">
                   {formatRank(activeCoin.market_cap_rank)}
                 </span>
+                <FavoriteButton
+                  coinId={activeCoin.id}
+                  coinName={activeCoin.name}
+                  isFavorite={isFavorite(activeCoin.id)}
+                  onToggle={toggleFavorite}
+                  size="md"
+                />
               </div>
               <span className="text-xs text-crypto-text-muted mt-0.5 block">
                 Última cotización: {formatDateTime(activeCoin.last_updated)}
