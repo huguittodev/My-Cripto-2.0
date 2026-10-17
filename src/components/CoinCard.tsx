@@ -2,6 +2,7 @@ import type { FC } from "react";
 import type { Cryptocurrency } from "../types/crypto";
 import { formatCurrency, formatCompactNumber, formatRank } from "../utils/formatters.ts";
 import { VariationBadge } from "./ui/Badge.tsx";
+import { MarketSparkline } from "./markets/MarketSparkline.tsx";
 
 interface CoinCardProps {
   coin: Cryptocurrency;
@@ -79,6 +80,21 @@ export const CoinCard: FC<CoinCardProps> = ({
           <VariationBadge value={coin.price_change_percentage_24h} size="sm" />
         </div>
       </div>
+
+      {/* Minigráfico de 7 días cuando existan datos históricos disponibles */}
+      {coin.sparkline_in_7d?.price && coin.sparkline_in_7d.price.length >= 2 && (
+        <div className="mt-3 pt-2.5 border-t border-crypto-border/50 flex items-center justify-between">
+          <span className="text-[10px] text-crypto-text-muted font-mono uppercase tracking-wider">
+            7 días
+          </span>
+          <MarketSparkline
+            prices={coin.sparkline_in_7d.price}
+            coinName={coin.name}
+            width={100}
+            height={26}
+          />
+        </div>
+      )}
 
       <div className="mt-4 pt-3 border-t border-crypto-border/60 flex items-center justify-between text-xs text-crypto-text-muted font-mono">
         <span>Cap: {formatCompactNumber(coin.market_cap)}</span>

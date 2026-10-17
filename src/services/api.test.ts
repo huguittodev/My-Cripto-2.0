@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   getTopCoins,
+  getMarkets,
+  searchCoins,
+  clearMarketsCache,
+  clearSearchCache,
   getGlobalMarketData,
   getCoinMarketChart,
   clearChartCache,
@@ -344,4 +348,278 @@ describe("getCoinMarketChart - API Service", () => {
     ).rejects.toThrow("El identificador del activo es obligatorio.");
   });
 });
+
+describe("getMarkets - API Service (Explorador)", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    clearMarketsCache();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    clearMarketsCache();
+  });
+
+  it("debe solicitar mercados con parámetros por defecto (EUR, cap desc, pág 1, 25 por pág, sparkline false)", async () => {
+    const mockList: CryptoList = [
+      {
+        id: "bitcoin",
+        symbol: "btc",
+        name: "Bitcoin",
+        image: "https://example.com/btc.png",
+        current_price: 65000,
+        market_cap: 1200000000000,
+        market_cap_rank: 1,
+        price_change_percentage_24h: 1.5,
+        last_updated: "2026-10-17T20:00:00.000Z",
+      },
+    ];
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockList),
+    } as unknown as Response);
+
+    const result = await getMarkets();
+    expect(result).toEqual(mockList);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("vs_currency=eur&order=market_cap_desc&per_page=25&page=1&sparkline=false"),
+    );
+  });
+
+  it("debe aplicar paginación personalizada y sparkline activado", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue([]),
+    } as unknown as Response);
+
+    await getMarkets({
+      page: 3,
+      perPage: 50,
+      order: "volume_desc",
+      sparkline: true,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("order=volume_desc&per_page=50&page=3&sparkline=true"),
+    );
+  });
+
+  it("debe incluir parámetro ids cuando se especifica una lista de identificadores", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue([]),
+    } as unknown as Response);
+
+    await getMarkets({
+      ids: ["bitcoin", "ethereum"],
+      sparkline: true,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("ids=bitcoin%2Cethereum"),
+    );
+  });
+
+  it("debe reutilizar la caché en memoria para llamadas idénticas y respetar ignoreCache", async () => {
+    const mockList: CryptoList = [
+      {
+        id: "solana",
+        symbol: "sol",
+        name: "Solana",
+        image: "https://example.com/sol.png",
+        current_price: 150,
+        market_cap: 70000000000,
+        market_cap_rank: 5,
+        price_change_percentage_24h: 3.2,
+        last_updated: "2026-10-17T20:00:00.000Z",
+      },
+    ];
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockList),
+    } as unknown as Response);
+
+    // Primera llamada (acude a red)
+    const res1 = await getMarkets({ page: 2, perPage: 25 });
+    expect(res1).toHaveLength(1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+
+    // Segunda llamada (desde caché)
+    const res2 = await getMarkets({ page: 2, perPage: 25 });
+    expect(res2).toEqual(res1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+
+    // Tercera llamada con ignoreCache: true (fuerza red)
+    await getMarkets({ page: 2, perPage: 25, ignoreCache: true });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("debe lanzar RateLimitError si getMarkets responde con 429", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+    } as unknown as Response);
+
+    await expect(getMarkets()).rejects.toThrow(RateLimitError);
+  });
+
+  it("debe lanzar HttpError si getMarkets responde con 500", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    } as unknown as Response);
+
+    await expect(getMarkets()).rejects.toThrow(HttpError);
+  });
+
+  it("debe lanzar NetworkError si falla la conexión en getMarkets", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError("Network down"));
+
+    await expect(getMarkets()).rejects.toThrow(NetworkError);
+  });
+
+  it("debe lanzar UnexpectedDataError si el cuerpo recibido no es un array", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ message: "Invalid payload" }),
+    } as unknown as Response);
+
+    await expect(getMarkets()).rejects.toThrow(UnexpectedDataError);
+  });
+
+  it("debe propagar AbortError cuando la petición de getMarkets es abortada", async () => {
+    const abortError = new DOMException("Aborted", "AbortError");
+    globalThis.fetch = vi.fn().mockRejectedValue(abortError);
+
+    await expect(getMarkets({ signal: new AbortController().signal })).rejects.toThrow("Aborted");
+  });
+});
+
+describe("searchCoins - API Service", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    clearSearchCache();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    clearSearchCache();
+  });
+
+  it("debe devolver lista vacía para consultas vacías sin invocar fetch", async () => {
+    globalThis.fetch = vi.fn();
+    const res1 = await searchCoins("");
+    const res2 = await searchCoins("   ");
+
+    expect(res1).toEqual([]);
+    expect(res2).toEqual([]);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("debe consultar /search y normalizar los resultados de criptomonedas", async () => {
+    const mockSearchResponse = {
+      coins: [
+        {
+          id: "pepe",
+          name: "Pepe",
+          symbol: "PEPE",
+          market_cap_rank: 63,
+          thumb: "https://example.com/pepe-thumb.png",
+          large: "https://example.com/pepe-large.png",
+        },
+      ],
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockSearchResponse),
+    } as unknown as Response);
+
+    const result = await searchCoins("pepe");
+
+    expect(result).toEqual([
+      {
+        id: "pepe",
+        name: "Pepe",
+        symbol: "PEPE",
+        market_cap_rank: 63,
+        thumb: "https://example.com/pepe-thumb.png",
+        large: "https://example.com/pepe-large.png",
+      },
+    ]);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/search?query=pepe"),
+    );
+  });
+
+  it("debe reutilizar la caché de búsqueda para el mismo término", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ coins: [] }),
+    } as unknown as Response);
+
+    await searchCoins("bitcoin");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+
+    await searchCoins("bitcoin");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("debe lanzar RateLimitError si /search responde 429", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+    } as unknown as Response);
+
+    await expect(searchCoins("cardano")).rejects.toThrow(RateLimitError);
+  });
+
+  it("debe lanzar HttpError si /search responde 500", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    } as unknown as Response);
+
+    await expect(searchCoins("cardano")).rejects.toThrow(HttpError);
+  });
+
+  it("debe lanzar NetworkError si falla la conexión en /search", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError("Fail"));
+
+    await expect(searchCoins("cardano")).rejects.toThrow(NetworkError);
+  });
+
+  it("debe lanzar UnexpectedDataError si la respuesta de /search no contiene la propiedad coins", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ categories: [] }),
+    } as unknown as Response);
+
+    await expect(searchCoins("cardano")).rejects.toThrow(UnexpectedDataError);
+  });
+
+  it("debe propagar AbortError cuando la búsqueda es abortada", async () => {
+    const abortError = new DOMException("Abort", "AbortError");
+    globalThis.fetch = vi.fn().mockRejectedValue(abortError);
+
+    await expect(searchCoins("solana", new AbortController().signal)).rejects.toThrow("Abort");
+  });
+});
+
 

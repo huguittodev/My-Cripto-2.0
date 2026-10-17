@@ -22,6 +22,11 @@ describe("formatters utils", () => {
       expect(formatted).toContain("0,5678");
     });
 
+    it("debe formatear micro-precios (< 0.00001) con hasta 8 decimales", () => {
+      const formatted = formatCurrency(0.0000034);
+      expect(formatted).toContain("0,00000340");
+    });
+
     it("debe devolver '—' para valores nulos o indefinidos", () => {
       expect(formatCurrency(null)).toBe("—");
       expect(formatCurrency(undefined)).toBe("—");

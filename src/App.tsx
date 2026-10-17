@@ -128,6 +128,17 @@ function App() {
     setSelectedCoin(coin);
   };
 
+  // Callback cuando el explorador de mercados actualiza o pagina el conjunto de activos
+  const handleCoinsLoaded = useCallback((loadedCoins: CryptoList) => {
+    setCoins(loadedCoins);
+    setLastUpdated(new Date().toISOString());
+    setSelectedCoin((prev) => {
+      if (!prev) return loadedCoins[0] || null;
+      const found = loadedCoins.find((c) => c.id === prev.id);
+      return found || prev || loadedCoins[0] || null;
+    });
+  }, []);
+
   // Título y subtítulo dinámico según la sección activa
   const sectionMeta: Record<NavSection, { title: string; subtitle: string }> = {
     overview: {
@@ -237,9 +248,9 @@ function App() {
               {/* Sección 4: Tabla de Mercados */}
               <section aria-label="Tabla de Mercados">
                 <MarketTable
-                  coins={coins}
                   selectedCoin={selectedCoin}
                   onSelectCoin={handleSelectCoin}
+                  onCoinsLoaded={handleCoinsLoaded}
                 />
               </section>
             </>
@@ -263,8 +274,39 @@ function App() {
         </div>
       )}
 
+      {/* Vista de Mercados Globales */}
+      {activeSection === "markets" && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-crypto-border">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-crypto-text tracking-tight">
+                  Mercados Globales
+                </h2>
+                <StatusBadge variant="live">Explorador</StatusBadge>
+              </div>
+              <p className="text-xs sm:text-sm text-crypto-text-secondary mt-1">
+                Explora el universo de criptomonedas, consulta tendencias de 7 días y filtra por capitalización y precio.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-mono text-crypto-text-muted">
+              <span>Fuente: CoinGecko v3</span>
+              <span>•</span>
+              <span>Divisa: EUR</span>
+            </div>
+          </div>
+
+          <MarketTable
+            selectedCoin={selectedCoin}
+            onSelectCoin={handleSelectCoin}
+            onCoinsLoaded={handleCoinsLoaded}
+          />
+        </div>
+      )}
+
       {/* Secciones Futuras: Estado Preparado / En Desarrollo */}
-      {activeSection !== "overview" && (
+      {activeSection !== "overview" && activeSection !== "markets" && (
         <div className="bg-crypto-surface border border-crypto-border rounded-xl p-8 sm:p-12 text-center max-w-2xl mx-auto my-8">
           <div className="w-12 h-12 rounded-xl bg-crypto-primary-soft border border-crypto-primary/30 flex items-center justify-center mx-auto mb-4 text-crypto-accent">
             <svg

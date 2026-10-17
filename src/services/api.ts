@@ -49,21 +49,73 @@ export class UnexpectedDataError extends Error {
   }
 }
 
+import type {
+  GetMarketsParams,
+  SearchCoinResult,
+} from "../types/crypto";
+
+// Caché en memoria para peticiones de mercados paginadas y filtradas
+const marketsCache = new Map<string, { data: CryptoList; expiresAt: number }>();
+
+// Caché en memoria para búsquedas textuales de activos
+const searchCache = new Map<string, { data: SearchCoinResult[]; expiresAt: number }>();
+
+// Limpia la caché de mercados (útil para pruebas unitarias y refresco explícito)
+export const clearMarketsCache = (): void => {
+  marketsCache.clear();
+};
+
+// Limpia la caché de búsquedas de activos
+export const clearSearchCache = (): void => {
+  searchCache.clear();
+};
+
 /**
- * Obtiene la lista de principales criptomonedas ordenadas por capitalización de mercado.
+ * Consulta de mercados paginada, con soporte de ordenación global, filtro por identificadores y sparkline.
+ * Endpoint: /coins/markets
  */
-export const getTopCoins = async ({
-  numCryptos,
-}: {
-  numCryptos: number;
-}): Promise<CryptoList> => {
+export const getMarkets = async ({
+  vsCurrency = "eur",
+  order = "market_cap_desc",
+  perPage = 25,
+  page = 1,
+  sparkline = false,
+  ids,
+  signal,
+  ignoreCache = false,
+}: GetMarketsParams = {}): Promise<CryptoList> => {
+  const idsKey = ids && ids.length > 0 ? [...ids].sort().join(",") : "all";
+  const cacheKey = `${vsCurrency.toLowerCase()}-${order}-${perPage}-${page}-${sparkline}-${idsKey}`;
+
+  // Comprueba la existencia de datos frescos en caché para mitigar rate limiting (429)
+  if (!ignoreCache) {
+    const cached = marketsCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+  }
+
+  const url = new URL(`${BASE_URL}/coins/markets`);
+  url.searchParams.set("vs_currency", vsCurrency.toLowerCase());
+  url.searchParams.set("order", order);
+  url.searchParams.set("per_page", String(perPage));
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("sparkline", sparkline ? "true" : "false");
+
+  if (ids && ids.length > 0) {
+    url.searchParams.set("ids", ids.join(","));
+  }
+
   let response: Response;
 
   try {
-    response = await fetch(
-      `${BASE_URL}/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=${numCryptos}&page=1&sparkline=false`,
-    );
+    response = await (signal
+      ? fetch(url.toString(), { signal })
+      : fetch(url.toString()));
   } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
     if (error instanceof TypeError) {
       throw new NetworkError();
     }
@@ -86,13 +138,132 @@ export const getTopCoins = async ({
     if (!Array.isArray(data)) {
       throw new UnexpectedDataError();
     }
-    return data as CryptoList;
+
+    const result = data as CryptoList;
+
+    // Almacena en caché durante 60 segundos
+    marketsCache.set(cacheKey, {
+      data: result,
+      expiresAt: Date.now() + 60 * 1000,
+    });
+
+    return result;
   } catch (error: unknown) {
     if (error instanceof UnexpectedDataError) {
       throw error;
     }
     throw new UnexpectedDataError(
       "Error al procesar los datos de la respuesta.",
+    );
+  }
+};
+
+/**
+ * Obtiene la lista de principales criptomonedas ordenadas por capitalización de mercado.
+ * Función retrocompatible para mantener intactos los puntos de entrada previos.
+ */
+export const getTopCoins = async ({
+  numCryptos,
+  signal,
+}: {
+  numCryptos: number;
+  signal?: AbortSignal;
+}): Promise<CryptoList> => {
+  return getMarkets({
+    perPage: numCryptos,
+    page: 1,
+    sparkline: false,
+    signal,
+  });
+};
+
+/**
+ * Busca activos en el catálogo de CoinGecko a partir de una cadena de texto.
+ * Endpoint: /search?query={query}
+ */
+export const searchCoins = async (
+  query: string,
+  signal?: AbortSignal,
+  ignoreCache = false,
+): Promise<SearchCoinResult[]> => {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) {
+    return [];
+  }
+
+  const cacheKey = `search-${trimmed}`;
+  if (!ignoreCache) {
+    const cached = searchCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+  }
+
+  let response: Response;
+
+  try {
+    const searchUrl = `${BASE_URL}/search?query=${encodeURIComponent(trimmed)}`;
+    response = await (signal
+      ? fetch(searchUrl, { signal })
+      : fetch(searchUrl));
+  } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    if (error instanceof TypeError) {
+      throw new NetworkError();
+    }
+    if (error instanceof Error) {
+      throw new NetworkError(`Error al realizar la búsqueda: ${error.message}`);
+    }
+    throw new NetworkError();
+  }
+
+  if (response.status === 429) {
+    throw new RateLimitError();
+  }
+
+  if (!response.ok) {
+    throw new HttpError(response.status);
+  }
+
+  try {
+    const json: unknown = await response.json();
+    if (
+      typeof json !== "object" ||
+      json === null ||
+      !("coins" in json) ||
+      !Array.isArray((json as { coins: unknown }).coins)
+    ) {
+      throw new UnexpectedDataError(
+        "La respuesta del buscador no contiene el catálogo de activos esperado.",
+      );
+    }
+
+    const rawCoins = (json as { coins: Array<Record<string, unknown>> }).coins;
+    const result: SearchCoinResult[] = rawCoins.map((coin) => ({
+      id: typeof coin.id === "string" ? coin.id : "",
+      name: typeof coin.name === "string" ? coin.name : "",
+      symbol: typeof coin.symbol === "string" ? coin.symbol : "",
+      market_cap_rank:
+        typeof coin.market_cap_rank === "number" ? coin.market_cap_rank : null,
+      thumb: typeof coin.thumb === "string" ? coin.thumb : "",
+      large: typeof coin.large === "string" ? coin.large : "",
+    }));
+
+    // Almacena en caché de búsqueda durante 120 segundos
+    searchCache.set(cacheKey, {
+      data: result,
+      expiresAt: Date.now() + 120 * 1000,
+    });
+
+    return result;
+  } catch (error: unknown) {
+    if (error instanceof UnexpectedDataError) {
+      throw error;
+    }
+    throw new UnexpectedDataError(
+      "Error al procesar los resultados de la búsqueda.",
     );
   }
 };

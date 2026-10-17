@@ -12,6 +12,10 @@ export interface Cryptocurrency {
   high_24h?: number;
   low_24h?: number;
   circulating_supply?: number;
+  // Serie histórica compacta de 7 días devuelta por CoinGecko con sparkline=true
+  sparkline_in_7d?: {
+    price: number[];
+  };
 }
 
 // Lista tipada de criptomonedas
@@ -54,3 +58,55 @@ export interface HistoricalPriceData {
   minPrice: number;
   maxPrice: number;
 }
+
+// Parámetros de ordenación soportados a nivel de servidor por CoinGecko
+export type MarketOrder =
+  | "market_cap_desc"
+  | "market_cap_asc"
+  | "volume_desc"
+  | "volume_asc"
+  | "id_asc"
+  | "id_desc";
+
+// Columnas ordenables de la tabla del explorador
+export type TableSortField = "rank" | "name" | "price" | "change" | "market_cap" | "volume";
+
+// Dirección de ordenación
+export type SortDirection = "asc" | "desc";
+
+// Filtro de rendimiento 24h
+export type MarketPerformanceFilter = "all" | "gainers" | "losers";
+
+// Filtro por tramos de capitalización de mercado
+export type MarketCapCategory = "all" | "large" | "mid" | "small";
+
+// Estructura de filtros aplicables al explorador
+export interface MarketFilters {
+  performance: MarketPerformanceFilter;
+  capCategory: MarketCapCategory;
+  minPrice: number | null;
+  maxPrice: number | null;
+}
+
+// Parámetros para la consulta paginada de mercados en CoinGecko
+export interface GetMarketsParams {
+  vsCurrency?: string;
+  order?: MarketOrder;
+  perPage?: number;
+  page?: number;
+  sparkline?: boolean;
+  ids?: string[];
+  signal?: AbortSignal;
+  ignoreCache?: boolean;
+}
+
+// Resultado elemental de la búsqueda de activos en CoinGecko /search
+export interface SearchCoinResult {
+  id: string;
+  name: string;
+  symbol: string;
+  market_cap_rank: number | null;
+  thumb: string;
+  large: string;
+}
+

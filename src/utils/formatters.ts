@@ -22,6 +22,8 @@ export function formatCurrency(
     decimals = fixedDecimals;
   } else if (absVal === 0) {
     decimals = 2;
+  } else if (absVal < 0.00001) {
+    decimals = 8;
   } else if (absVal < 0.0001) {
     decimals = 6;
   } else if (absVal < 1) {
