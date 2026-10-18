@@ -25,6 +25,10 @@ Registra aquí decisiones que afecten al producto y al código. No des por decid
 | 2026-10-18 | Método FIFO para valoración de cartera y cálculo de P&L | Proporcionar una contabilidad de lotes rigurosa, trazable y estándar en finanzas | Separación estricta entre beneficio realizado y no realizado; asignación precisa de lotes antiguos |
 | 2026-10-18 | Validación estricta anti-posiciones cortas en operaciones de cartera | Prevenir inconsistencias financieras en un modelo de cartera no apalancada | No se permiten ventas superiores al saldo acumulado disponible |
 | 2026-10-18 | Persistencia versionada `my-crypto-portfolio-v1` en localStorage | Aislamiento y resiliencia ante errores de almacenamiento o JSON corrupto | Respaldo en memoria automático y desacoplamiento de la interfaz mediante hook |
+| 2026-10-19 | Motor de evaluación puro y desacoplado (`src/utils/alertEngine.ts`) | Garantizar testabilidad estricta, certidumbre en las condiciones de disparo (≥ y ≤) y prevención de falsos positivos o notificaciones repetidas | Lógica pura sin efectos secundarios, validada con 15 escenarios unitarios y tolerancia a precios obsoletos |
+| 2026-10-19 | Persistencia versionada `my-crypto-alerts-v1` con respaldo en memoria | Proteger las alertas del usuario frente a recargas y tolerar fallos o datos corruptos en localStorage | Aislamiento con clave específica de My Crypto 2.0 y sincronización reactiva mediante evento custom `mycrypto:alerts_updated` |
+| 2026-10-19 | Sistema dual de notificaciones (Toasts in-app + Notification API de escritorio) | Informar al usuario en tiempo real sin requerir un backend centralizado ni infraestructura de pago | Notificaciones visuales con navegación directa y avisos de escritorio protegidos contra fallos |
+| 2026-10-19 | Consulta centralizada y reutilización de caché de mercado para alertas | Prevenir saturación de cuotas de CoinGecko y evitar temporizadores independientes por alerta | Sondeo periódico unificado (30s) combinando activos en memoria y consultas agrupadas por lote |
 
 
 

@@ -123,8 +123,7 @@ export const Sidebar: FC<SidebarProps> = ({
     {
       id: "alerts",
       label: "Alertas",
-      phaseText: "Fase 8",
-      isImplemented: false,
+      isImplemented: true,
       icon: (active) => (
         <svg
           xmlns="http://www.w3.org/2000/svg"

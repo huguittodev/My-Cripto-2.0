@@ -184,4 +184,55 @@ export interface PortfolioStoragePayload {
   updatedAt: number;
 }
 
+// ==========================================
+// TIPOS DEL MOTOR DE ALERTAS (PRICE ALERTS)
+// ==========================================
+
+// Tipo de condición: el precio alcanza o supera (gte) o cae por debajo o iguala (lte)
+export type AlertCondition = "gte" | "lte";
+
+// Estado de la alerta
+export type AlertStatus = "active" | "inactive" | "triggered";
+
+// Entidad principal de alerta de precio
+export interface PriceAlert {
+  id: string;
+  coinId: string;
+  coinSymbol: string;
+  coinName: string;
+  coinImage?: string;
+  condition: AlertCondition;
+  targetPrice: number;
+  currency: string;
+  createdAt: number;
+  status: AlertStatus;
+  triggeredAt?: number;
+  triggeredPrice?: number;
+  lastNotifiedAt?: number;
+  notes?: string;
+}
+
+// Estructura versionada para persistencia de alertas en localStorage
+export interface AlertStoragePayload {
+  version: number;
+  alerts: PriceAlert[];
+  updatedAt: number;
+}
+
+// Notificación in-app derivada del disparo de una alerta
+export interface NotificationToast {
+  id: string;
+  alertId: string;
+  coinId: string;
+  coinName: string;
+  coinSymbol: string;
+  coinImage?: string;
+  condition: AlertCondition;
+  targetPrice: number;
+  observedPrice: number;
+  currency: string;
+  timestamp: number;
+}
+
+
 

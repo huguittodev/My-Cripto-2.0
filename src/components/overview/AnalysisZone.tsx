@@ -13,12 +13,14 @@ interface AnalysisZoneProps {
   selectedCoin: Cryptocurrency | null;
   coins: CryptoList;
   onSelectCoin: (coin: Cryptocurrency) => void;
+  onConfigureAlert?: (coin: Cryptocurrency) => void;
 }
 
 export const AnalysisZone: FC<AnalysisZoneProps> = ({
   selectedCoin,
   coins,
   onSelectCoin,
+  onConfigureAlert,
 }) => {
   const activeCoin = selectedCoin || coins[0] || null;
   const { isFavorite, toggleFavorite } = useWatchlist();
@@ -78,6 +80,30 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
                   onToggle={toggleFavorite}
                   size="md"
                 />
+                {onConfigureAlert && (
+                  <button
+                    type="button"
+                    onClick={() => onConfigureAlert(activeCoin)}
+                    className="p-1 rounded-lg text-crypto-text-secondary hover:text-crypto-accent hover:bg-crypto-surface-raised transition-colors border border-crypto-border/50"
+                    title={`Crear alerta de precio para ${activeCoin.name}`}
+                    aria-label={`Crear alerta de precio para ${activeCoin.name}`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
               <span className="text-xs text-crypto-text-muted mt-0.5 block">
                 Última cotización: {formatDateTime(activeCoin.last_updated)}

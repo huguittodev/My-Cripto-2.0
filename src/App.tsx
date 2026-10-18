@@ -9,6 +9,9 @@ import { AnalysisZone } from "./components/overview/AnalysisZone.tsx";
 import { MarketTable } from "./components/overview/MarketTable.tsx";
 import { WatchlistView } from "./components/watchlist/WatchlistView.tsx";
 import { PortfolioView } from "./components/portfolio/PortfolioView.tsx";
+import { AlertsView } from "./components/alerts/AlertsView.tsx";
+import { ToastContainer } from "./components/alerts/ToastContainer.tsx";
+import { useAlerts } from "./hooks/useAlerts.ts";
 import { LoadingSpinner } from "./components/common/LoadingSpinner.tsx";
 import { ErrorMessage } from "./components/common/ErrorMessage.tsx";
 import { StatusBadge } from "./components/ui/Badge.tsx";
@@ -23,6 +26,9 @@ function App() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [selectedCoin, setSelectedCoin] = useState<Cryptocurrency | null>(null);
   const [activeSection, setActiveSection] = useState<NavSection>("overview");
+
+  // Motor centralizado de alertas con notificaciones visuales globales
+  const { toasts, dismissToast } = useAlerts({ externalCoins: coins });
 
   // Obtiene las métricas macroeconómicas consolidadas del mercado desde CoinGecko /global
   const fetchGlobalData = useCallback(() => {
@@ -161,7 +167,7 @@ function App() {
     },
     alerts: {
       title: "Alertas de Precio",
-      subtitle: "Notificaciones y umbrales técnicos configurables",
+      subtitle: "Monitorización continua de umbrales técnicos y notificaciones en tiempo real",
     },
     ai: {
       title: "AI Market Analyst",
@@ -244,6 +250,10 @@ function App() {
                   selectedCoin={selectedCoin}
                   coins={coins}
                   onSelectCoin={handleSelectCoin}
+                  onConfigureAlert={(coin) => {
+                    setSelectedCoin(coin);
+                    setActiveSection("alerts");
+                  }}
                 />
               </section>
 
@@ -322,11 +332,28 @@ function App() {
         <PortfolioView onNavigateToMarkets={() => setActiveSection("markets")} />
       )}
 
+      {/* Vista de Alertas de Precio */}
+      {activeSection === "alerts" && (
+        <AlertsView
+          onNavigateToMarkets={() => setActiveSection("markets")}
+          initialCoins={coins}
+          preselectedCoin={selectedCoin}
+        />
+      )}
+
+      {/* Contenedor flotante de notificaciones in-app de alertas cumplidas */}
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={dismissToast}
+        onNavigateToAlerts={() => setActiveSection("alerts")}
+      />
+
       {/* Secciones Futuras: Estado Preparado / En Desarrollo */}
       {activeSection !== "overview" &&
         activeSection !== "markets" &&
         activeSection !== "watchlist" &&
-        activeSection !== "portfolio" && (
+        activeSection !== "portfolio" &&
+        activeSection !== "alerts" && (
         <div className="bg-crypto-surface border border-crypto-border rounded-xl p-8 sm:p-12 text-center max-w-2xl mx-auto my-8">
           <div className="w-12 h-12 rounded-xl bg-crypto-primary-soft border border-crypto-primary/30 flex items-center justify-center mx-auto mb-4 text-crypto-accent">
             <svg
