@@ -78,13 +78,18 @@ export function useWatchlist() {
     (coinId: string) => {
       if (!coinId) return;
       const normalized = coinId.trim().toLowerCase();
-      if (watchlistIds.includes(normalized)) {
-        removeFavorite(normalized);
+      const current = getStoredWatchlist();
+      if (current.includes(normalized)) {
+        const updated = removeIdFromWatchlist(normalized);
+        setWatchlistIds(updated);
+        notifyUpdate();
       } else {
-        addFavorite(normalized);
+        const updated = addIdToWatchlist(normalized);
+        setWatchlistIds(updated);
+        notifyUpdate();
       }
     },
-    [watchlistIds, addFavorite, removeFavorite],
+    [notifyUpdate],
   );
 
   return {

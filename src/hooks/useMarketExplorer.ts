@@ -43,7 +43,12 @@ export function useMarketExplorer({
     if (sortField === "volume") {
       return sortDirection === "asc" ? "volume_asc" : "volume_desc";
     }
-    if (sortField === "rank" || sortField === "market_cap") {
+    if (sortField === "rank") {
+      // Para el ranking (#1, #2, #3), el sentido ascendente en número corresponde
+      // a la mayor capitalización en CoinGecko (market_cap_desc)
+      return sortDirection === "asc" ? "market_cap_desc" : "market_cap_asc";
+    }
+    if (sortField === "market_cap") {
       return sortDirection === "asc" ? "market_cap_asc" : "market_cap_desc";
     }
     // Para columnas sin soporte nativo de ordenación en el endpoint libre, ordenamos en cliente
@@ -78,6 +83,10 @@ export function useMarketExplorer({
           ignoreCache,
         });
 
+        if (controller.signal.aborted) {
+          return;
+        }
+
         setCoins(data);
         if (onCoinsLoaded) {
           onCoinsLoaded(data);
@@ -86,10 +95,15 @@ export function useMarketExplorer({
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
+        if (controller.signal.aborted) {
+          return;
+        }
         const message = err instanceof Error ? err.message : "Error al consultar los mercados.";
         setErrorMsg(message);
       } finally {
-        setIsLoading(false);
+        if (abortControllerRef.current === controller) {
+          setIsLoading(false);
+        }
       }
     },
     [onCoinsLoaded],
@@ -97,11 +111,11 @@ export function useMarketExplorer({
 
   // Ejecuta la búsqueda remota global cuando el usuario introduce un término de búsqueda
   const executeRemoteSearch = useCallback(
-    async (query: string) => {
+    async (query: string, ignoreCache = false) => {
       const trimmed = query.trim();
       if (!trimmed) {
         setIsSearchMode(false);
-        fetchPage(page, perPage, serverOrder);
+        fetchPage(1, perPage, serverOrder, ignoreCache);
         return;
       }
 
@@ -117,20 +131,37 @@ export function useMarketExplorer({
 
       try {
         // 1. Descubre identificadores coincidentes mediante el catálogo global de CoinGecko
-        const searchResults = await searchCoins(trimmed, controller.signal);
+        const searchResults = await searchCoins(trimmed, controller.signal, ignoreCache);
+
+        if (controller.signal.aborted) {
+          return;
+        }
 
         if (searchResults.length === 0) {
           setCoins([]);
+          if (onCoinsLoaded) {
+            onCoinsLoaded([]);
+          }
           return;
         }
 
         // 2. Consulta los datos de mercado en tiempo real para los 25 activos más relevantes
-        const topIds = searchResults.slice(0, 25).map((coin) => coin.id);
+        const topIds = searchResults.slice(0, 25).map((coin) => coin.id).filter(Boolean);
+        if (topIds.length === 0) {
+          setCoins([]);
+          return;
+        }
+
         const marketData = await getMarkets({
           ids: topIds,
           sparkline: true,
           signal: controller.signal,
+          ignoreCache,
         });
+
+        if (controller.signal.aborted) {
+          return;
+        }
 
         setCoins(marketData);
         if (onCoinsLoaded) {
@@ -140,13 +171,18 @@ export function useMarketExplorer({
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
+        if (controller.signal.aborted) {
+          return;
+        }
         const message = err instanceof Error ? err.message : "Error al buscar activos.";
         setErrorMsg(message);
       } finally {
-        setIsSearchingRemote(false);
+        if (abortControllerRef.current === controller) {
+          setIsSearchingRemote(false);
+        }
       }
     },
-    [fetchPage, onCoinsLoaded, page, perPage, serverOrder],
+    [fetchPage, onCoinsLoaded, perPage, serverOrder],
   );
 
   // Carga inicial y cambios en paginación u ordenación en servidor
@@ -163,16 +199,17 @@ export function useMarketExplorer({
       clearTimeout(searchTimeoutRef.current);
     }
 
-    if (!searchTerm.trim()) {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) {
       if (isSearchMode) {
         setIsSearchMode(false);
-        fetchPage(page, perPage, serverOrder);
+        fetchPage(1, perPage, serverOrder);
       }
       return;
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      executeRemoteSearch(searchTerm);
+      executeRemoteSearch(trimmed);
     }, 400);
 
     return () => {
@@ -180,7 +217,7 @@ export function useMarketExplorer({
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchTerm, executeRemoteSearch, fetchPage, isSearchMode, page, perPage, serverOrder]);
+  }, [searchTerm, executeRemoteSearch, fetchPage, isSearchMode, perPage, serverOrder]);
 
   // Limpieza al desmontar el hook
   useEffect(() => {
@@ -216,24 +253,35 @@ export function useMarketExplorer({
 
   const handleFiltersChange = (newFilters: MarketFilters) => {
     setFilters(newFilters);
+    if (page !== 1) {
+      setPage(1);
+    }
   };
 
   const handleResetFilters = () => {
     setFilters(INITIAL_MARKET_FILTERS);
+    if (page !== 1) {
+      setPage(1);
+    }
   };
 
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
+    if (term.trim() && page !== 1) {
+      setPage(1);
+    }
   };
 
   const handleClearSearch = () => {
     setSearchTerm("");
+    setPage(1);
     setIsSearchMode(false);
+    fetchPage(1, perPage, serverOrder);
   };
 
   const handleRetry = () => {
     if (isSearchMode && searchTerm.trim()) {
-      executeRemoteSearch(searchTerm);
+      executeRemoteSearch(searchTerm, true);
     } else {
       fetchPage(page, perPage, serverOrder, true);
     }

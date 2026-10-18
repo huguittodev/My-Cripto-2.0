@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { FC } from "react";
 import type { Cryptocurrency, CryptoList } from "../../types/crypto";
 import { getMarkets } from "../../services/api.ts";
@@ -15,16 +15,33 @@ interface WatchlistViewProps {
   selectedCoin: Cryptocurrency | null;
   onSelectCoin: (coin: Cryptocurrency) => void;
   onNavigateToMarkets?: () => void;
+  initialCoins?: CryptoList;
+}
+
+export interface WatchlistItem {
+  coin: Cryptocurrency;
+  hasMarketData: boolean;
 }
 
 export const WatchlistView: FC<WatchlistViewProps> = ({
   selectedCoin,
   onSelectCoin,
   onNavigateToMarkets,
+  initialCoins,
 }) => {
   const { watchlistIds, isFavorite, toggleFavorite, isStorageAvailable } = useWatchlist();
 
-  const [coins, setCoins] = useState<CryptoList>([]);
+  // Registro en memoria de cotizaciones cargadas para resiliencia ante cortes o rate limits
+  const [coinsMap, setCoinsMap] = useState<Map<string, Cryptocurrency>>(() => {
+    const map = new Map<string, Cryptocurrency>();
+    if (initialCoins && initialCoins.length > 0) {
+      for (const coin of initialCoins) {
+        map.set(coin.id.toLowerCase(), coin);
+      }
+    }
+    return map;
+  });
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
@@ -34,7 +51,6 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
   // Consulta los datos de mercado en tiempo real para todos los identificadores guardados
   const fetchWatchlistCoins = useCallback(async (ids: string[], ignoreCache = false) => {
     if (ids.length === 0) {
-      setCoins([]);
       setIsLoading(false);
       return;
     }
@@ -56,15 +72,30 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
         ignoreCache,
       });
 
-      setCoins(data);
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      setCoinsMap((prev) => {
+        const next = new Map(prev);
+        for (const coin of data) {
+          next.set(coin.id.toLowerCase(), coin);
+        }
+        return next;
+      });
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
+      if (controller.signal.aborted) {
         return;
       }
       const message = err instanceof Error ? err.message : "Error al cargar datos de favoritos.";
       setErrorMsg(message);
     } finally {
-      setIsLoading(false);
+      if (abortControllerRef.current === controller) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
@@ -83,8 +114,35 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
     fetchWatchlistCoins(watchlistIds, true);
   };
 
-  // Identificadores en watchlist que no devolvieron datos de mercado
-  const missingCount = watchlistIds.length - coins.length;
+  // Construye la lista de elementos visible a partir de los IDs guardados en la watchlist
+  const items: WatchlistItem[] = useMemo(() => {
+    return watchlistIds.map((id) => {
+      const normalizedId = id.trim().toLowerCase();
+      const loaded = coinsMap.get(normalizedId);
+      if (loaded) {
+        return { coin: loaded, hasMarketData: true };
+      }
+      return {
+        coin: {
+          id: normalizedId,
+          symbol: normalizedId.slice(0, 5).toUpperCase(),
+          name: normalizedId.charAt(0).toUpperCase() + normalizedId.slice(1).replace(/-/g, " "),
+          image: "",
+          current_price: 0,
+          market_cap: 0,
+          market_cap_rank: 0,
+          price_change_percentage_24h: 0,
+          last_updated: "",
+        },
+        hasMarketData: false,
+      };
+    });
+  }, [watchlistIds, coinsMap]);
+
+  // Cantidad de activos guardados que no disponen de cotización en vivo
+  const missingCount = useMemo(() => {
+    return items.filter((item) => !item.hasMarketData).length;
+  }, [items]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -96,7 +154,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
               Mi Watchlist
             </h2>
             <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-crypto-primary-soft text-crypto-accent border border-crypto-accent/30">
-              {watchlistIds.length} {watchlistIds.length === 1 ? "activo" : "activos"}
+              {`${watchlistIds.length} ${watchlistIds.length === 1 ? "activo" : "activos"}`}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-crypto-text-secondary mt-1">
@@ -119,8 +177,8 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
         />
       )}
 
-      {/* Estado de Carga */}
-      {isLoading && coins.length === 0 && (
+      {/* Estado de Carga Completa (solo cuando no hay cotizaciones previas) */}
+      {isLoading && items.length > 0 && items.every((i) => !i.hasMarketData) && (
         <div className="py-16">
           <LoadingSpinner message="Consultando cotizaciones de tu watchlist en CoinGecko..." size="lg" />
         </div>
@@ -171,8 +229,8 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
         </div>
       )}
 
-      {/* Contenido con Datos de Favoritos */}
-      {coins.length > 0 && (
+      {/* Contenido con Datos de Favoritos (se muestra siempre que haya IDs, protegiendo contra errores de red) */}
+      {items.length > 0 && (!isLoading || items.some((i) => i.hasMarketData)) && (
         <div className="bg-crypto-surface rounded-xl border border-crypto-border overflow-hidden shadow-lg">
           {/* Barra Superior con Controles de Vista */}
           <div className="p-4 sm:p-5 border-b border-crypto-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -181,7 +239,8 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                 Activos en Seguimiento
               </h3>
               <p className="text-xs text-crypto-text-muted mt-0.5 font-mono">
-                {coins.length} {coins.length === 1 ? "criptomoneda guardada" : "criptomonedas guardadas"} con cotización en vivo
+                {`${items.length} ${items.length === 1 ? "criptomoneda guardada" : "criptomonedas guardadas"}`}
+                {missingCount > 0 ? ` (${items.length - missingCount} con cotización en vivo)` : " con cotización en vivo"}
               </p>
             </div>
 
@@ -189,7 +248,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
               {/* Aviso si algún activo guardado no devolvió datos */}
               {missingCount > 0 && (
                 <span className="text-xs text-crypto-warning font-mono">
-                  ⚠ {missingCount} {missingCount === 1 ? "activo no disponible" : "activos no disponibles"}
+                  {`⚠ ${missingCount} ${missingCount === 1 ? "activo sin cotización" : "activos sin cotización"}`}
                 </span>
               )}
 
@@ -250,7 +309,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
           {/* Vista en Tarjetas */}
           {viewMode === "cards" && (
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {coins.map((coin) => (
+              {items.map(({ coin, hasMarketData }) => (
                 <div key={coin.id} className="relative group">
                   <CoinCard
                     coin={coin}
@@ -259,6 +318,13 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                     isFavorite={isFavorite(coin.id)}
                     onToggleFavorite={toggleFavorite}
                   />
+                  {!hasMarketData && (
+                    <div className="absolute top-2 right-12 z-10">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-crypto-warning/20 text-crypto-warning border border-crypto-warning/40">
+                        Sin cotización
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -283,7 +349,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                 </thead>
 
                 <tbody className="divide-y divide-crypto-border/50">
-                  {coins.map((coin) => {
+                  {items.map(({ coin, hasMarketData }) => {
                     const isSelected = selectedCoin?.id === coin.id;
                     return (
                       <tr
@@ -308,24 +374,30 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
 
                         {/* Ranking */}
                         <td className="py-3.5 px-3 sm:px-4 text-center font-mono text-xs text-crypto-text-muted">
-                          {formatRank(coin.market_cap_rank)}
+                          {hasMarketData && coin.market_cap_rank ? formatRank(coin.market_cap_rank) : "—"}
                         </td>
 
                         {/* Activo: Icono + Nombre + Símbolo */}
                         <td className="py-3.5 px-3 sm:px-4">
                           <div className="flex items-center gap-3">
-                            <img
-                              src={coin.image}
-                              alt={coin.name}
-                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-crypto-surface-raised p-0.5 object-contain flex-shrink-0"
-                              loading="lazy"
-                            />
+                            {coin.image ? (
+                              <img
+                                src={coin.image}
+                                alt={coin.name}
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-crypto-surface-raised p-0.5 object-contain flex-shrink-0"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-crypto-surface-raised border border-crypto-border flex items-center justify-center font-mono font-bold text-xs text-crypto-text-muted flex-shrink-0">
+                                {coin.symbol.slice(0, 2)}
+                              </div>
+                            )}
                             <div className="min-w-0">
                               <div className="font-semibold text-crypto-text text-xs sm:text-sm truncate">
                                 {coin.name}
                               </div>
                               <span className="text-[11px] text-crypto-text-muted uppercase font-mono font-medium">
-                                {coin.symbol}
+                                {coin.symbol.toUpperCase()}
                               </span>
                             </div>
                           </div>
@@ -333,32 +405,46 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
 
                         {/* Precio Actual */}
                         <td className="py-3.5 px-3 sm:px-4 text-right font-mono font-bold text-crypto-text tabular-nums">
-                          {formatCurrency(coin.current_price)}
+                          {hasMarketData ? (
+                            formatCurrency(coin.current_price)
+                          ) : (
+                            <span className="text-crypto-text-muted font-normal text-xs font-mono">—</span>
+                          )}
                         </td>
 
                         {/* Variación 24h */}
                         <td className="py-3.5 px-3 sm:px-4 text-right">
-                          <VariationBadge value={coin.price_change_percentage_24h} size="sm" />
+                          {hasMarketData ? (
+                            <VariationBadge value={coin.price_change_percentage_24h} size="sm" />
+                          ) : (
+                            <span className="text-[10px] font-mono text-crypto-text-muted px-1.5 py-0.5 rounded bg-crypto-surface-raised border border-crypto-border/50">
+                              No disponible
+                            </span>
+                          )}
                         </td>
 
                         {/* Capitalización */}
                         <td className="hidden sm:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
-                          {formatCompactNumber(coin.market_cap)}
+                          {hasMarketData && coin.market_cap ? formatCompactNumber(coin.market_cap) : "—"}
                         </td>
 
                         {/* Volumen 24h */}
                         <td className="hidden md:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
-                          {coin.total_volume ? formatCompactNumber(coin.total_volume) : "—"}
+                          {hasMarketData && coin.total_volume ? formatCompactNumber(coin.total_volume) : "—"}
                         </td>
 
                         {/* Minigráfico de 7 días */}
                         <td className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center">
-                          <MarketSparkline
-                            prices={coin.sparkline_in_7d?.price}
-                            coinName={coin.name}
-                            width={110}
-                            height={32}
-                          />
+                          {hasMarketData && coin.sparkline_in_7d?.price ? (
+                            <MarketSparkline
+                              prices={coin.sparkline_in_7d?.price}
+                              coinName={coin.name}
+                              width={110}
+                              height={32}
+                            />
+                          ) : (
+                            <span className="text-crypto-text-muted font-mono text-xs">—</span>
+                          )}
                         </td>
 
                         {/* Acción: Seleccionar activo */}

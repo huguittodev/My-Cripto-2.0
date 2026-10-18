@@ -9,33 +9,73 @@ interface ErrorMessageProps {
 export const ErrorMessage: FC<ErrorMessageProps> = ({
   message,
   onRetry,
-  title = "Error al obtener datos del mercado",
+  title,
 }) => {
+  const isRateLimit = message.includes("429") || message.toLowerCase().includes("límite de peticiones");
+  const isNetwork = message.toLowerCase().includes("red") || message.toLowerCase().includes("conectar");
+
+  const displayTitle =
+    title ||
+    (isRateLimit
+      ? "Límite de peticiones alcanzado (HTTP 429)"
+      : isNetwork
+        ? "Error de conexión con el proveedor"
+        : "Error al obtener datos del mercado");
+
   return (
-    <div className="bg-crypto-surface p-6 rounded-xl border border-crypto-negative/30 max-w-2xl mx-auto my-6 text-center shadow-lg shadow-red-950/20">
-      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-crypto-negative-soft text-crypto-negative mb-4">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
+    <div className="bg-crypto-surface p-6 rounded-xl border border-crypto-negative/30 max-w-2xl mx-auto my-6 text-center shadow-lg shadow-red-950/20 animate-fade-in">
+      <div
+        className={`inline-flex items-center justify-center w-12 h-12 rounded-full mb-4 ${
+          isRateLimit
+            ? "bg-crypto-warning/20 text-crypto-warning border border-crypto-warning/40"
+            : "bg-crypto-negative-soft text-crypto-negative"
+        }`}
+      >
+        {isRateLimit ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        )}
       </div>
 
       <h3 className="text-base font-semibold text-crypto-text mb-1">
-        {title}
+        {displayTitle}
       </h3>
-      <p className="text-sm text-crypto-text-secondary mb-5 max-w-lg mx-auto">
+      <p className="text-sm text-crypto-text-secondary mb-3 max-w-lg mx-auto">
         {message}
       </p>
+
+      {isRateLimit && (
+        <div className="mb-4 inline-block text-xs font-mono text-crypto-text-muted bg-crypto-surface-raised px-3 py-1 rounded border border-crypto-border">
+          Consejo: La cuota pública de CoinGecko es de ~10-30 req/min. Espera unos segundos antes de reintentar.
+        </div>
+      )}
 
       {onRetry && (
         <button

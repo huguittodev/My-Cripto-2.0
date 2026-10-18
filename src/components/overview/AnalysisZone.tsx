@@ -30,6 +30,8 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
     data: chartData,
     loading: chartLoading,
     errorMsg: chartError,
+    isStale: chartIsStale,
+    isRateLimit: chartIsRateLimit,
     hoveredPoint,
     setHoveredPoint,
     refetch: refetchChart,
@@ -151,6 +153,8 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
             data={chartData}
             isLoading={chartLoading}
             errorMsg={chartError}
+            isStale={chartIsStale}
+            isRateLimit={chartIsRateLimit}
             onRetry={refetchChart}
             hoveredPoint={hoveredPoint}
             onHoverPoint={setHoveredPoint}

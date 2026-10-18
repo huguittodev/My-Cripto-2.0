@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FormEvent } from "react";
-import { getTopCoins, getGlobalMarketData } from "./services/api.ts";
+import { getMarkets, getGlobalMarketData } from "./services/api.ts";
 import type { Cryptocurrency, CryptoList, GlobalMarketData } from "./types/crypto";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 import type { NavSection } from "./components/layout/Sidebar.tsx";
@@ -19,7 +19,7 @@ function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [globalLoading, setGlobalLoading] = useState(true);
-  const [value, setValue] = useState<string>("10");
+  const [value, setValue] = useState<string>("25");
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [selectedCoin, setSelectedCoin] = useState<Cryptocurrency | null>(null);
   const [activeSection, setActiveSection] = useState<NavSection>("overview");
@@ -40,8 +40,8 @@ function App() {
       });
   }, []);
 
-  // Función centralizada para cargar datos desde CoinGecko
-  const fetchCoins = useCallback((countStr: string) => {
+  // Función centralizada para cargar datos desde el proveedor de mercado
+  const fetchCoins = useCallback((countStr: string, ignoreCache = false) => {
     const num = parseInt(countStr, 10);
     if (isNaN(num) || num <= 0) {
       alert("Por favor, introduce un número entero mayor que 0.");
@@ -51,7 +51,7 @@ function App() {
     setLoading(true);
     setErrorMsg(null);
 
-    getTopCoins({ numCryptos: num })
+    getMarkets({ perPage: num, sparkline: true, ignoreCache })
       .then((data) => {
         setCoins(data);
         setLastUpdated(new Date().toISOString());
@@ -63,18 +63,18 @@ function App() {
         });
       })
       .catch((err: Error) => {
-        setErrorMsg(err.message || "Error al conectar con CoinGecko.");
+        setErrorMsg(err.message || "Error al conectar con el proveedor de mercado.");
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  // Carga inicial automática al montar el componente (top 10 por defecto e indicadores globales)
+  // Carga inicial automática al montar el componente (top 25 con sparkline para compartir caché con el explorador)
   useEffect(() => {
     let isCancelled = false;
 
-    getTopCoins({ numCryptos: 10 })
+    getMarkets({ perPage: 25, sparkline: true })
       .then((data) => {
         if (!isCancelled) {
           setCoins(data);
@@ -84,7 +84,7 @@ function App() {
       })
       .catch((err: Error) => {
         if (!isCancelled) {
-          setErrorMsg(err.message || "Error al conectar con CoinGecko.");
+          setErrorMsg(err.message || "Error al conectar con el proveedor de mercado.");
         }
       })
       .finally(() => {
@@ -122,7 +122,7 @@ function App() {
   };
 
   const handleRefresh = () => {
-    fetchCoins(value || "10");
+    fetchCoins(value || "25", true);
     fetchGlobalData();
   };
 
@@ -313,6 +313,7 @@ function App() {
           selectedCoin={selectedCoin}
           onSelectCoin={handleSelectCoin}
           onNavigateToMarkets={() => setActiveSection("markets")}
+          initialCoins={coins}
         />
       )}
 

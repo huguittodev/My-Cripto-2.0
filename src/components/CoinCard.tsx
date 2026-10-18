@@ -54,12 +54,18 @@ export const CoinCard: FC<CoinCardProps> = ({
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <img
-            src={coin.image}
-            alt={coin.name}
-            className="w-9 h-9 rounded-full bg-crypto-surface-raised p-0.5 object-contain group-hover:scale-105 transition-transform"
-            loading="lazy"
-          />
+          {coin.image ? (
+            <img
+              src={coin.image}
+              alt={coin.name}
+              className="w-9 h-9 rounded-full bg-crypto-surface-raised p-0.5 object-contain group-hover:scale-105 transition-transform"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-crypto-surface-raised border border-crypto-border flex items-center justify-center font-mono font-bold text-xs text-crypto-text-muted flex-shrink-0">
+              {coin.symbol.slice(0, 2)}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-1.5">
               <h3 className="font-semibold text-crypto-text text-sm sm:text-base leading-tight group-hover:text-crypto-accent transition-colors">
@@ -74,7 +80,7 @@ export const CoinCard: FC<CoinCardProps> = ({
 
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-crypto-surface-raised text-crypto-text-muted border border-crypto-border/60">
-            {formatRank(coin.market_cap_rank)}
+            {coin.market_cap_rank ? formatRank(coin.market_cap_rank) : "—"}
           </span>
           <FavoriteButton
             coinId={coin.id}
@@ -90,13 +96,17 @@ export const CoinCard: FC<CoinCardProps> = ({
         <div>
           <span className="text-xs text-crypto-text-muted block mb-0.5">Precio</span>
           <p className="text-xl font-mono font-bold text-crypto-text tabular-nums">
-            {formatCurrency(coin.current_price)}
+            {coin.last_updated ? formatCurrency(coin.current_price) : "—"}
           </p>
         </div>
 
         <div className="text-right">
           <span className="text-xs text-crypto-text-muted block mb-0.5">24h</span>
-          <VariationBadge value={coin.price_change_percentage_24h} size="sm" />
+          {coin.last_updated ? (
+            <VariationBadge value={coin.price_change_percentage_24h} size="sm" />
+          ) : (
+            <span className="text-xs text-crypto-text-muted font-mono">No disponible</span>
+          )}
         </div>
       </div>
 
@@ -116,7 +126,7 @@ export const CoinCard: FC<CoinCardProps> = ({
       )}
 
       <div className="mt-4 pt-3 border-t border-crypto-border/60 flex items-center justify-between text-xs text-crypto-text-muted font-mono">
-        <span>Cap: {formatCompactNumber(coin.market_cap)}</span>
+        <span>Cap: {coin.last_updated && coin.market_cap ? formatCompactNumber(coin.market_cap) : "—"}</span>
         <span className="text-[11px] text-crypto-accent group-hover:underline">
           {isSelected ? "Seleccionado" : "Ver detalle →"}
         </span>

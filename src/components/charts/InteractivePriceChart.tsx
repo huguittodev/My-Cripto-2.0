@@ -7,6 +7,8 @@ interface InteractivePriceChartProps {
   data: HistoricalPriceData | null;
   isLoading: boolean;
   errorMsg: string | null;
+  isStale?: boolean;
+  isRateLimit?: boolean;
   onRetry?: () => void;
   hoveredPoint: ChartPoint | null;
   onHoverPoint: (point: ChartPoint | null) => void;
@@ -49,6 +51,8 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
   data,
   isLoading,
   errorMsg,
+  isStale = false,
+  isRateLimit = false,
   onRetry,
   hoveredPoint,
   onHoverPoint,
@@ -99,8 +103,8 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
     onHoverPoint(null);
   }, [onHoverPoint]);
 
-  // Estado de carga con esqueleto visual interactivo
-  if (isLoading) {
+  // Estado de carga inicial cuando aún no existen datos
+  if (isLoading && !data) {
     return (
       <div className="relative w-full h-56 sm:h-64 rounded-xl bg-crypto-surface-hover/30 border border-crypto-border flex flex-col items-center justify-center p-6 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-crypto-surface-raised/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite]" />
@@ -112,8 +116,8 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
     );
   }
 
-  // Estado de error amigable con opción de reintento
-  if (errorMsg) {
+  // Estado de error fatal cuando no existen datos previos para mostrar
+  if (errorMsg && !data) {
     return (
       <div className="w-full h-56 sm:h-64 rounded-xl bg-crypto-negative-soft/20 border border-crypto-negative/30 flex flex-col items-center justify-center p-6 text-center">
         <div className="w-10 h-10 rounded-full bg-crypto-negative-soft text-crypto-negative flex items-center justify-center mb-2">
@@ -218,6 +222,24 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
       onPointerLeave={handlePointerLeave}
       className="relative w-full h-56 sm:h-64 select-none cursor-crosshair touch-none"
     >
+      {/* Aviso flotante discreto si estamos mostrando datos en caché tras fallo */}
+      {(errorMsg || isStale) && (
+        <div className="absolute top-2 left-2 z-20 flex items-center gap-2 px-2.5 py-1 rounded-md bg-crypto-surface-raised/95 border border-crypto-warning/40 text-crypto-warning text-[11px] font-mono shadow-md backdrop-blur-sm">
+          <span>
+            ⚠ Modo respaldo: {isRateLimit ? "Límite de API alcanzado" : "Datos vigentes de la última consulta"}
+          </span>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="text-crypto-accent hover:text-crypto-text underline ml-1 cursor-pointer font-semibold"
+            >
+              Reintentar
+            </button>
+          )}
+        </div>
+      )}
+
       <svg
         viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
         className="w-full h-full overflow-visible"
