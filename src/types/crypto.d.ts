@@ -234,5 +234,97 @@ export interface NotificationToast {
   timestamp: number;
 }
 
+// ==========================================
+// TIPOS DEL AI CRYPTO ANALYST (GEMINI API)
+// ==========================================
+
+export type AiMessageRole = "user" | "model";
+
+export interface AiChatMessage {
+  id: string;
+  role: AiMessageRole;
+  text: string;
+  timestamp: number;
+  isError?: boolean;
+  contextTag?: string;
+  model?: string;
+  isCached?: boolean;
+}
+
+export interface AiAssetContext {
+  id: string;
+  name: string;
+  symbol: string;
+  current_price?: number;
+  price_change_percentage_24h?: number;
+  market_cap?: number;
+  market_cap_rank?: number | null;
+  total_volume?: number;
+  low_24h?: number;
+  high_24h?: number;
+  last_updated?: string;
+  source?: string;
+  currency?: string;
+  historical_summary?: {
+    days: number;
+    startPrice: number;
+    endPrice: number;
+    absoluteChange: number;
+    percentageChange: number;
+  };
+}
+
+export interface AiCompareAsset {
+  id: string;
+  name: string;
+  symbol: string;
+  current_price?: number;
+  price_change_percentage_24h?: number;
+  market_cap?: number;
+  total_volume?: number;
+}
+
+export interface AiPortfolioSummaryContext {
+  totalCurrentValue: number;
+  totalCostBasis: number;
+  totalUnrealizedPnl: number;
+  totalUnrealizedPnlPercentage: number;
+  totalRealizedPnl: number;
+  positionCount: number;
+  distribution?: Array<{
+    name: string;
+    symbol: string;
+    percentage: number;
+  }>;
+}
+
+export interface AiMarketContext {
+  asset?: AiAssetContext;
+  compareAssets?: AiCompareAsset[];
+  global?: GlobalMarketData;
+  portfolio?: AiPortfolioSummaryContext;
+}
+
+export interface AiAnalystStatus {
+  isConfigured: boolean;
+  model: string;
+  maxPromptLength: number;
+  maxHistoryTurns: number;
+}
+
+export interface AiAnalystResponse {
+  text: string;
+  model: string;
+  timestamp: number;
+  isCached: boolean;
+  contextSummary?: {
+    hasAssetData: boolean;
+    hasGlobalData: boolean;
+    hasPortfolioData: boolean;
+    comparedCount: number;
+  };
+}
+
+
 
 

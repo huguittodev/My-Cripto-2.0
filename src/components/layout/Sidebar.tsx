@@ -144,8 +144,7 @@ export const Sidebar: FC<SidebarProps> = ({
     {
       id: "ai",
       label: "AI Analyst",
-      phaseText: "Fase 9",
-      isImplemented: false,
+      isImplemented: true,
       icon: (active) => (
         <svg
           xmlns="http://www.w3.org/2000/svg"

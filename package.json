@@ -12,6 +12,7 @@
     "start": "node server/proxy.mjs"
   },
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

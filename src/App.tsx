@@ -15,6 +15,7 @@ import { useAlerts } from "./hooks/useAlerts.ts";
 import { LoadingSpinner } from "./components/common/LoadingSpinner.tsx";
 import { ErrorMessage } from "./components/common/ErrorMessage.tsx";
 import { StatusBadge } from "./components/ui/Badge.tsx";
+import { AiAnalystView } from "./components/ai/AiAnalystView.tsx";
 
 function App() {
   const [coins, setCoins] = useState<CryptoList>([]);
@@ -170,8 +171,8 @@ function App() {
       subtitle: "Monitorización continua de umbrales técnicos y notificaciones en tiempo real",
     },
     ai: {
-      title: "AI Market Analyst",
-      subtitle: "Informes contextuales, resúmenes de mercado y análisis asistido",
+      title: "AI Crypto Analyst",
+      subtitle: "Análisis descriptivo contextual, métricas explicadas y comparativas con Gemini API",
     },
     settings: {
       title: "Ajustes del Sistema",
@@ -341,6 +342,17 @@ function App() {
         />
       )}
 
+      {/* Vista de AI Crypto Analyst */}
+      {activeSection === "ai" && (
+        <AiAnalystView
+          selectedCoin={selectedCoin}
+          coins={coins}
+          globalData={globalData}
+          onSelectCoin={handleSelectCoin}
+          onNavigateToMarkets={() => setActiveSection("markets")}
+        />
+      )}
+
       {/* Contenedor flotante de notificaciones in-app de alertas cumplidas */}
       <ToastContainer
         toasts={toasts}
@@ -353,7 +365,8 @@ function App() {
         activeSection !== "markets" &&
         activeSection !== "watchlist" &&
         activeSection !== "portfolio" &&
-        activeSection !== "alerts" && (
+        activeSection !== "alerts" &&
+        activeSection !== "ai" && (
         <div className="bg-crypto-surface border border-crypto-border rounded-xl p-8 sm:p-12 text-center max-w-2xl mx-auto my-8">
           <div className="w-12 h-12 rounded-xl bg-crypto-primary-soft border border-crypto-primary/30 flex items-center justify-center mx-auto mb-4 text-crypto-accent">
             <svg

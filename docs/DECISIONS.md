@@ -29,6 +29,11 @@ Registra aquí decisiones que afecten al producto y al código. No des por decid
 | 2026-10-19 | Persistencia versionada `my-crypto-alerts-v1` con respaldo en memoria | Proteger las alertas del usuario frente a recargas y tolerar fallos o datos corruptos en localStorage | Aislamiento con clave específica de My Crypto 2.0 y sincronización reactiva mediante evento custom `mycrypto:alerts_updated` |
 | 2026-10-19 | Sistema dual de notificaciones (Toasts in-app + Notification API de escritorio) | Informar al usuario en tiempo real sin requerir un backend centralizado ni infraestructura de pago | Notificaciones visuales con navegación directa y avisos de escritorio protegidos contra fallos |
 | 2026-10-19 | Consulta centralizada y reutilización de caché de mercado para alertas | Prevenir saturación de cuotas de CoinGecko y evitar temporizadores independientes por alerta | Sondeo periódico unificado (30s) combinando activos en memoria y consultas agrupadas por lote |
+| 2026-10-19 | Aislamiento estricto de Gemini API en backend/proxy (sin clave cliente) | Proteger `GEMINI_API_KEY` frente a fugas en el bundle público de Vite | Endpoint `POST /api/ai/analyst` con variables de entorno del servidor y cero exposición en cliente |
+| 2026-10-19 | Uso del SDK oficial `@google/genai` con modelo `gemini-2.5-flash` configurable | Emplear la librería actual de Google con cuota gratuita sin comprometer compatibilidad futura | Desacoplamiento de componentes React mediante adaptador y variable `GEMINI_MODEL` |
+| 2026-10-19 | Inyección de datos de mercado verificados y distinción epistémica estricta | Evitar alucinaciones de precios, porcentajes y falsas noticias o atribuciones de causalidad | El modelo recibe cotizaciones EUR reales de CoinGecko y etiqueta hechos vs interpretaciones |
+| 2026-10-19 | Envío de cartera opcional bajo consentimiento explícito y anónimo | Respetar la privacidad financiera del usuario sin recopilar datos personales en consultas generales | Se envían exclusivamente métricas agregadas (valor, coste, P&L, pesos) omitiendo transacciones y notas |
+| 2026-10-19 | Control de cuota multinivel (rate limit 15 req/min, concurrencia 2, caché 45s) | Asegurar viabilidad dentro del nivel gratuito de Gemini y evitar saturación accidental | Deduplicación instantánea de consultas idénticas y códigos HTTP 429 descriptivos |
 
 
 

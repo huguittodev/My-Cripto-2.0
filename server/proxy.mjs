@@ -6,6 +6,7 @@ import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { handleAiRequest, handleStatusRequest } from './ai/aiRoutes.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -133,7 +134,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url.startsWith('/api/coingecko')) {
+  if (req.url === '/api/ai/analyst') {
+    handleAiRequest(req, res);
+  } else if (req.url === '/api/ai/status') {
+    handleStatusRequest(req, res);
+  } else if (req.url.startsWith('/api/coingecko')) {
     proxyToCoinGecko(req, res);
   } else {
     serveStatic(req, res);
@@ -146,5 +151,12 @@ server.listen(PORT, () => {
     console.log('[My Crypto 2.0] Clave de CoinGecko inyectada de forma segura.');
   } else {
     console.log('[My Crypto 2.0] Funcionando con cuota pública de CoinGecko (sin clave).');
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY || '';
+  if (geminiKey) {
+    console.log(`[My Crypto 2.0] AI Crypto Analyst conectado con Gemini (${process.env.GEMINI_MODEL || 'gemini-2.5-flash'}).`);
+  } else {
+    console.log('[My Crypto 2.0] AI Crypto Analyst pendiente de clave (configura GEMINI_API_KEY en .env).');
   }
 });
