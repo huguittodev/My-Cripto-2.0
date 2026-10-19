@@ -77,6 +77,8 @@ export async function handleAiRequest(req, res) {
         ok: false,
         error: errorCode,
         message,
+        retryable: typeof err.retryable === 'boolean' ? err.retryable : undefined,
+        retryAfter: err.retryAfterSeconds || undefined,
         details: err.details || undefined,
       })
     );

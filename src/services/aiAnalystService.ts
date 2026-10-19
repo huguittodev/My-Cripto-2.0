@@ -10,14 +10,23 @@ export class AiAnalystError extends Error {
   statusCode: number;
   details?: unknown;
   retryable?: boolean;
+  retryAfter?: number;
 
-  constructor(message: string, code = "AI_ERROR", statusCode = 500, details?: unknown, retryable?: boolean) {
+  constructor(
+    message: string,
+    code = "AI_ERROR",
+    statusCode = 500,
+    details?: unknown,
+    retryable?: boolean,
+    retryAfter?: number,
+  ) {
     super(message);
     this.name = "AiAnalystError";
     this.code = code;
     this.statusCode = statusCode;
     this.details = details;
     this.retryable = retryable;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -38,6 +47,8 @@ export async function fetchAiStatus(signal?: AbortSignal): Promise<AiAnalystStat
         `Error al verificar el estado de la IA (HTTP ${res.status})`,
         "STATUS_CHECK_FAILED",
         res.status,
+        undefined,
+        false,
       );
     }
 
@@ -57,6 +68,7 @@ export async function fetchAiStatus(signal?: AbortSignal): Promise<AiAnalystStat
       "NETWORK_ERROR",
       502,
       err instanceof Error ? err.message : String(err),
+      true,
     );
   }
 }
@@ -65,6 +77,7 @@ export interface AskAiAnalystParams {
   prompt: string;
   context?: AiMarketContext;
   history?: Array<Pick<AiChatMessage, "role" | "text">>;
+  fallbackToDegraded?: boolean;
   signal?: AbortSignal;
 }
 
@@ -76,11 +89,12 @@ export async function askAiAnalyst({
   prompt,
   context,
   history = [],
+  fallbackToDegraded = false,
   signal,
 }: AskAiAnalystParams): Promise<AiAnalystResponse> {
   const trimmed = prompt.trim();
   if (!trimmed) {
-    throw new AiAnalystError("La consulta no puede estar vacía.", "EMPTY_PROMPT", 400);
+    throw new AiAnalystError("La consulta no puede estar vacía.", "EMPTY_PROMPT", 400, undefined, false);
   }
 
   try {
@@ -94,6 +108,7 @@ export async function askAiAnalyst({
         prompt: trimmed,
         context: context || {},
         history: history.map((h) => ({ role: h.role, text: h.text })),
+        fallbackToDegraded,
       }),
       signal,
     });
@@ -102,14 +117,21 @@ export async function askAiAnalyst({
 
     if (!res.ok || !json.ok) {
       const message = json.message || `Error del servidor al procesar consulta (HTTP ${res.status})`;
-      const code = json.error || "API_ERROR";
-      throw new AiAnalystError(message, code, res.status, json.details, json.retryable);
+      const code = json.error || (res.status === 429 ? "QUOTA_EXCEEDED" : res.status === 504 ? "REQUEST_TIMEOUT" : "API_ERROR");
+      const retryable =
+        typeof json.retryable === "boolean"
+          ? json.retryable
+          : res.status >= 500 || res.status === 429;
+      throw new AiAnalystError(message, code, res.status, json.details, retryable, json.retryAfter);
     }
 
     return json.data as AiAnalystResponse;
   } catch (err) {
     if (err instanceof AiAnalystError) throw err;
-    if ((err instanceof Error && err.name === "AbortError") || (err instanceof DOMException && err.name === "AbortError")) {
+    if (
+      (err instanceof Error && err.name === "AbortError") ||
+      (err instanceof DOMException && err.name === "AbortError")
+    ) {
       throw new AiAnalystError("Consulta cancelada por el usuario.", "REQUEST_ABORTED", 0, undefined, false);
     }
     throw new AiAnalystError(
@@ -117,6 +139,7 @@ export async function askAiAnalyst({
       "NETWORK_ERROR",
       502,
       err instanceof Error ? err.message : String(err),
+      true,
     );
   }
 }

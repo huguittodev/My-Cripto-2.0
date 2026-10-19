@@ -49,6 +49,7 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
     sendMessage,
     clearConversation,
     retryLastMessage,
+    loadDegradedMode,
     cancelGeneration,
     checkStatus,
   } = useAiAnalyst({
@@ -283,22 +284,34 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
           </div>
         )}
 
-        {/* Banner de Error con opción de reintento */}
+        {/* Banner de Error con opción de reintento o modo degradado */}
         {error && (
-          <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-crypto-negative-soft/30 border border-crypto-negative/30 text-xs text-crypto-text">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-crypto-negative-soft/30 border border-crypto-negative/30 text-xs text-crypto-text">
             <div className="flex items-center gap-2">
-              <span className="text-crypto-negative">⚠️</span>
-              <span className="text-crypto-negative">{error.message}</span>
+              <span className="text-crypto-negative flex-shrink-0">⚠️</span>
+              <span className="text-crypto-negative leading-relaxed">{error.message}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                void retryLastMessage();
-              }}
-              className="px-3 py-1 rounded-lg bg-crypto-negative/20 hover:bg-crypto-negative/30 text-crypto-negative border border-crypto-negative/40 text-[11px] font-mono transition-colors flex-shrink-0"
-            >
-              Reintentar
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  void loadDegradedMode();
+                }}
+                className="px-2.5 py-1 rounded-lg bg-crypto-surface hover:bg-crypto-surface-hover text-crypto-warning border border-crypto-warning/30 text-[11px] font-mono transition-colors"
+                title="Generar resumen cuantitativo con datos verificados de la terminal"
+              >
+                Ver datos (Modo Degradado)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void retryLastMessage();
+                }}
+                className="px-3 py-1 rounded-lg bg-crypto-negative/20 hover:bg-crypto-negative/30 text-crypto-negative border border-crypto-negative/40 text-[11px] font-mono transition-colors"
+              >
+                Reintentar
+              </button>
+            </div>
           </div>
         )}
 

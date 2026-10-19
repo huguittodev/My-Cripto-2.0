@@ -249,6 +249,8 @@ export interface AiChatMessage {
   contextTag?: string;
   model?: string;
   isCached?: boolean;
+  isDegraded?: boolean;
+  provider?: string;
 }
 
 export interface AiAssetContext {
@@ -310,6 +312,7 @@ export interface AiAnalystStatus {
   model: string;
   maxPromptLength: number;
   maxHistoryTurns: number;
+  secondaryConfigured?: boolean;
 }
 
 export interface AiAnalystResponse {
@@ -317,6 +320,8 @@ export interface AiAnalystResponse {
   model: string;
   timestamp: number;
   isCached: boolean;
+  isDegraded?: boolean;
+  provider?: string;
   contextSummary?: {
     hasAssetData: boolean;
     hasGlobalData: boolean;

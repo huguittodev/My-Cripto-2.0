@@ -150,4 +150,82 @@ describe('AI Analyst Service (Server Logic)', () => {
       expect(JSON.stringify(status)).not.toContain('secret_test_gemini_key_123');
     });
   });
+
+  describe('Fallback y Proveedor Alternativo', () => {
+    const originalSecondaryKey = process.env.SECONDARY_AI_KEY;
+
+    afterEach(() => {
+      process.env.SECONDARY_AI_KEY = originalSecondaryKey;
+    });
+
+    it('si el proveedor alternativo no está configurado, no se intenta utilizar', async () => {
+      delete process.env.SECONDARY_AI_KEY;
+      const failingClient = {
+        models: {
+          generateContent: vi.fn().mockRejectedValue(new Error('Gemini caído')),
+        },
+      };
+
+      const secondaryFn = vi.fn();
+
+      await expect(
+        processAnalystQuery(
+          { prompt: '¿Cómo está ETH?' },
+          { clientOverride: failingClient, secondaryProviderFn: secondaryFn }
+        )
+      ).rejects.toThrow();
+
+      // Al no estar configurado SECONDARY_AI_KEY, nunca se debe invocar
+      expect(secondaryFn).not.toHaveBeenCalled();
+    });
+
+    it('si el proveedor alternativo está configurado y el primario falla, se recurre a él', async () => {
+      process.env.SECONDARY_AI_KEY = 'secondary_secret_key';
+      const failingClient = {
+        models: {
+          generateContent: vi.fn().mockRejectedValue(new Error('Fallo temporal')),
+        },
+      };
+
+      const secondaryFn = vi.fn().mockResolvedValue({
+        text: 'Respuesta del proveedor secundario.',
+        model: 'secondary-model',
+        provider: 'secondary',
+        timestamp: Date.now(),
+      });
+
+      const response = await processAnalystQuery(
+        { prompt: '¿Cómo está ETH?' },
+        { clientOverride: failingClient, secondaryProviderFn: secondaryFn }
+      );
+
+      expect(secondaryFn).toHaveBeenCalledTimes(1);
+      expect(response.text).toBe('Respuesta del proveedor secundario.');
+      expect(response.model).toBe('secondary-model');
+    });
+
+    it('genera respuesta determinista sin llamar a Gemini si fallbackToDegraded es true', async () => {
+      const mockClient = {
+        models: {
+          generateContent: vi.fn(),
+        },
+      };
+
+      const response = await processAnalystQuery(
+        {
+          prompt: 'Quiero ser rico donde invierto?',
+          context: { asset: { id: 'bitcoin', name: 'Bitcoin', current_price: 85000 } },
+          fallbackToDegraded: true,
+        },
+        { clientOverride: mockClient }
+      );
+
+      expect(response.isDegraded).toBe(true);
+      expect(response.model).toBe('deterministic-fallback');
+      expect(response.text).toContain('Modo Degradado');
+      expect(response.text).toContain('85000 EUR');
+      // No debe llamar a Gemini
+      expect(mockClient.models.generateContent).not.toHaveBeenCalled();
+    });
+  });
 });

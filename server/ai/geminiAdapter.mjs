@@ -1,39 +1,36 @@
 // Adaptador para el SDK oficial de Google Gen AI (@google/genai)
-// Gestiona autenticación en servidor, llamadas al modelo, control de tiempos y mapeo de errores
+// Gestiona autenticación en servidor, llamadas al modelo, control de tiempos, reintentos y mapeo de errores
 
-import { GoogleGenAI } from '@google/genai';
 import { SYSTEM_INSTRUCTION } from './promptBuilder.mjs';
+import {
+  createGenAIClient as createProviderClient,
+  callGeminiApi,
+  classifyGeminiError,
+  PRIMARY_DEFAULT_MODEL,
+  FALLBACK_MODELS,
+  DEFAULT_TIMEOUT_MS,
+} from './providers/geminiProvider.mjs';
+import {
+  AiProviderError,
+  executeWithRetry,
+} from './providers/aiProviderInterface.mjs';
 
-export const DEFAULT_MODEL = 'gemini-2.5-flash';
-export const REQUEST_TIMEOUT_MS = 25000;
+export const DEFAULT_MODEL = PRIMARY_DEFAULT_MODEL;
+export const REQUEST_TIMEOUT_MS = DEFAULT_TIMEOUT_MS;
 
-export class GeminiAdapterError extends Error {
-  constructor(message, code, statusCode = 500, details = null) {
-    super(message);
-    this.name = 'GeminiAdapterError';
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-  }
-}
+// Alias para preservar compatibilidad con imports preexistentes
+export const GeminiAdapterError = AiProviderError;
 
 /**
  * Instancia o recupera el cliente de Google Gen AI a partir de las variables de entorno.
  */
 export function createGenAIClient(apiKey = process.env.GEMINI_API_KEY) {
-  if (!apiKey || apiKey.trim().length === 0) {
-    throw new GeminiAdapterError(
-      'La variable GEMINI_API_KEY no está configurada en el servidor. Configura tu clave en el archivo .env.',
-      'GEMINI_NOT_CONFIGURED',
-      503
-    );
-  }
-  return new GoogleGenAI({ apiKey: apiKey.trim() });
+  return createProviderClient(apiKey);
 }
 
 /**
  * Ejecuta una consulta al modelo Gemini con el contexto de mercado y el historial proporcionado.
- * Implementa timeout de seguridad y mapea los errores de API y cuota a códigos inteligibles.
+ * Implementa timeout de seguridad, reintentos limitados con backoff y mapea errores a códigos inteligibles.
  */
 export async function generateAnalystResponse({
   prompt,
@@ -42,9 +39,11 @@ export async function generateAnalystResponse({
   modelName = process.env.GEMINI_MODEL || DEFAULT_MODEL,
   clientOverride = null,
   timeoutMs = REQUEST_TIMEOUT_MS,
+  signal,
+  allowModelFallback = true,
 }) {
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-    throw new GeminiAdapterError('El prompt de usuario no puede estar vacío.', 'INVALID_PROMPT', 400);
+    throw new GeminiAdapterError('El prompt de usuario no puede estar vacío.', 'INVALID_PROMPT', 400, false);
   }
 
   const client = clientOverride || createGenAIClient();
@@ -73,97 +72,63 @@ export async function generateAnalystResponse({
     parts: [{ text: userContentParts }],
   });
 
-  const generatePromise = client.models.generateContent({
-    model: modelName,
-    contents,
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      maxOutputTokens: 1200,
-      temperature: 0.2, // Baja temperatura para favorecer precisión factual y coherencia matemática
-    },
-  });
-
-  // Temporizador de cancelación para evitar solicitudes colgadas
-  let timerId;
-  const timeoutPromise = new Promise((_, reject) => {
-    timerId = setTimeout(() => {
-      reject(
-        new GeminiAdapterError(
-          'Tiempo de espera agotado al conectar con el servicio de Gemini.',
-          'REQUEST_TIMEOUT',
-          504
-        )
-      );
-    }, timeoutMs);
-  });
-
-  try {
-    const response = await Promise.race([generatePromise, timeoutPromise]);
-    clearTimeout(timerId);
-
-    const candidate = response.candidates?.[0];
-    const text = response.text || candidate?.content?.parts?.[0]?.text || '';
-
-    if (!text) {
-      throw new GeminiAdapterError(
-        'El modelo no devolvió texto en su respuesta.',
-        'EMPTY_RESPONSE',
-        502
-      );
+  // Lista de modelos a probar: modelo preferido primero, seguido de alternativas si falla por deprecación o cuota diaria
+  const modelsToTry = [modelName];
+  if (allowModelFallback && !clientOverride) {
+    for (const fb of FALLBACK_MODELS) {
+      if (!modelsToTry.includes(fb)) {
+        modelsToTry.push(fb);
+      }
     }
-
-    return {
-      text,
-      model: modelName,
-      finishReason: candidate?.finishReason || 'STOP',
-      usage: response.usageMetadata || null,
-      timestamp: Date.now(),
-    };
-  } catch (err) {
-    clearTimeout(timerId);
-
-    if (err instanceof GeminiAdapterError) {
-      throw err;
-    }
-
-    const message = err?.message || String(err);
-    const status = err?.status || err?.statusCode || 500;
-
-    // Detección de errores de cuota / rate limits (HTTP 429)
-    if (status === 429 || message.includes('RESOURCE_EXHAUSTED') || message.includes('429')) {
-      throw new GeminiAdapterError(
-        'Se ha superado la cuota de solicitudes gratuitas de la API de Gemini (Rate Limit). Por favor, espera unos segundos antes de volver a preguntar.',
-        'QUOTA_EXCEEDED',
-        429,
-        message
-      );
-    }
-
-    // Detección de clave no válida o permisos denegados
-    if (status === 401 || status === 403 || message.includes('API_KEY_INVALID') || message.includes('PERMISSION_DENIED')) {
-      throw new GeminiAdapterError(
-        'La clave de API de Gemini no es válida o no dispone de permisos suficientes. Verifica tu GEMINI_API_KEY en .env.',
-        'INVALID_API_KEY',
-        401,
-        message
-      );
-    }
-
-    // Fallo de conexión o red
-    if (message.includes('fetch failed') || message.includes('ENOTFOUND') || message.includes('ECONNREFUSED')) {
-      throw new GeminiAdapterError(
-        'No se pudo establecer conexión de red con los servidores de Google Gemini.',
-        'NETWORK_ERROR',
-        502,
-        message
-      );
-    }
-
-    throw new GeminiAdapterError(
-      `Error al procesar la respuesta de Gemini: ${message}`,
-      'GEMINI_ERROR',
-      status >= 400 && status < 600 ? status : 500,
-      message
-    );
   }
+
+  let lastError = null;
+
+  for (const currentModel of modelsToTry) {
+    try {
+      // Ejecuta la llamada con hasta 1 reintento limitado para errores transitorios (5xx / timeout)
+      const result = await executeWithRetry(
+        () =>
+          callGeminiApi({
+            client,
+            modelName: currentModel,
+            contents,
+            systemInstruction: SYSTEM_INSTRUCTION,
+            timeoutMs,
+            signal,
+          }),
+        {
+          maxRetries: 1, // Máximo 1 reintento para evitar esperas excesivas en la UI
+          baseDelayMs: 600,
+          isRetryable: (err) => err instanceof AiProviderError && err.retryable,
+        }
+      );
+
+      return result;
+    } catch (err) {
+      lastError = err instanceof AiProviderError ? err : classifyGeminiError(err);
+
+      // Si el error es de autenticación (401/403) o cancelación, NO reintentar con otro modelo
+      if (lastError.statusCode === 401 || lastError.statusCode === 403 || lastError.code === 'REQUEST_ABORTED') {
+        throw lastError;
+      }
+
+      // Si es un error de cliente (400) o no está permitido fallback, lanzar de inmediato
+      if (lastError.statusCode === 400 || !allowModelFallback || clientOverride) {
+        throw lastError;
+      }
+
+      // Si el modelo falló por cuota diaria (429 no reintentable) o modelo no encontrado (404), prueba el siguiente modelo
+      const canTryNextModel =
+        lastError.code === 'MODEL_NOT_FOUND' ||
+        (lastError.code === 'QUOTA_EXCEEDED' && !lastError.retryable) ||
+        lastError.code === 'REQUEST_TIMEOUT';
+
+      if (!canTryNextModel) {
+        throw lastError;
+      }
+    }
+  }
+
+  throw lastError || new GeminiAdapterError('No se pudo obtener respuesta de ningún modelo disponible.', 'ALL_MODELS_FAILED', 502, false);
 }

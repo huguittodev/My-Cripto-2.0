@@ -59,9 +59,23 @@ describe("AiMessageItem Component", () => {
       timestamp: 1770000000000,
       isError: true,
     };
-
     const html = renderToString(<AiMessageItem message={errorMessage} />);
     expect(html).toContain("border-crypto-negative");
     expect(html).toContain("Error de conexión con Gemini.");
+  });
+
+  it("renderiza indicador de Modo Degradado cuando isDegraded es true", () => {
+    const degradedMessage: AiChatMessage = {
+      id: "msg-deg",
+      role: "model",
+      text: "Datos deterministas de mercado.",
+      timestamp: 1770000000000,
+      isDegraded: true,
+      model: "deterministic-fallback",
+    };
+
+    const html = renderToString(<AiMessageItem message={degradedMessage} />);
+    expect(html).toContain("Modo Degradado");
+    expect(html).toContain("deterministic-fallback");
   });
 });

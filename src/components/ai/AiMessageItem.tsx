@@ -129,6 +129,11 @@ export const AiMessageItem: FC<AiMessageItemProps> = ({ message }) => {
                   Caché
                 </span>
               )}
+              {message.isDegraded && (
+                <span className="px-1.5 py-0.2 rounded bg-crypto-warning/15 text-crypto-warning border border-crypto-warning/30 text-[10px] font-semibold" title="Datos deterministas de la terminal (sin análisis por IA)">
+                  Modo Degradado
+                </span>
+              )}
             </div>
 
             <button

@@ -75,6 +75,7 @@ describe("Frontend AI Analyst Client Service", () => {
           prompt: "¿Cómo ves el precio de Bitcoin?",
           context: mockContext,
           history: [],
+          fallbackToDegraded: false,
         }),
       })
     );
@@ -134,6 +135,82 @@ describe("Frontend AI Analyst Client Service", () => {
       expect(aiErr.retryable).toBe(false);
       expect(aiErr.statusCode).toBe(503);
     }
+  });
+
+  it("mapea errores HTTP 504 de timeout como AiAnalystError reintentable", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 504,
+      json: async () => ({
+        ok: false,
+        error: "REQUEST_TIMEOUT",
+        message: "Tiempo de espera agotado al conectar con el servicio de Gemini.",
+        retryable: true,
+      }),
+    } as unknown as Response);
+
+    try {
+      await askAiAnalyst({ prompt: "Quiero ser rico donde invierto?" });
+      expect.fail("Debería haber lanzado un error");
+    } catch (err) {
+      const aiErr = err as AiAnalystError;
+      expect(aiErr.code).toBe("REQUEST_TIMEOUT");
+      expect(aiErr.statusCode).toBe(504);
+      expect(aiErr.retryable).toBe(true);
+      expect(aiErr.message).toContain("Tiempo de espera agotado");
+    }
+  });
+
+  it("mapea errores HTTP 401 de autenticación como NO reintentables", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({
+        ok: false,
+        error: "INVALID_API_KEY",
+        message: "La clave de API de Gemini no es válida.",
+        retryable: false,
+      }),
+    } as unknown as Response);
+
+    try {
+      await askAiAnalyst({ prompt: "¿Cómo está BTC?" });
+      expect.fail("Debería haber lanzado un error");
+    } catch (err) {
+      const aiErr = err as AiAnalystError;
+      expect(aiErr.code).toBe("INVALID_API_KEY");
+      expect(aiErr.statusCode).toBe(401);
+      expect(aiErr.retryable).toBe(false);
+    }
+  });
+
+  it("envía correctamente el flag fallbackToDegraded al servidor", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ok: true,
+        data: {
+          text: "Resumen determinista en modo degradado.",
+          model: "deterministic-fallback",
+          isDegraded: true,
+          timestamp: Date.now(),
+        },
+      }),
+    } as unknown as Response);
+
+    const result = await askAiAnalyst({
+      prompt: "Quiero ser rico",
+      fallbackToDegraded: true,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "/api/ai/analyst",
+      expect.objectContaining({
+        body: expect.stringContaining('"fallbackToDegraded":true'),
+      })
+    );
+    expect(result.isDegraded).toBe(true);
   });
 
   it("gestiona abortos o cancelaciones de solicitud de forma controlada", async () => {

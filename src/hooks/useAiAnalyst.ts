@@ -36,6 +36,7 @@ export interface UseAiAnalystReturn {
   sendMessage: (prompt: string) => Promise<void>;
   clearConversation: () => void;
   retryLastMessage: () => Promise<void>;
+  loadDegradedMode: () => Promise<void>;
   cancelGeneration: () => void;
   checkStatus: () => Promise<void>;
 }
@@ -57,6 +58,7 @@ Puedo ayudarte a:
 
 /**
  * Hook para gestionar el estado de conversación, contexto de mercado y conexión con el AI Analyst.
+ * Implementa control de secuencias, cancelación limpia y modo degradado seguro.
  */
 export const useAiAnalyst = ({
   selectedCoin = null,
@@ -75,6 +77,16 @@ export const useAiAnalyst = ({
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastPromptRef = useRef<string>("");
+  const currentRequestIdRef = useRef<number>(0);
+
+  // Cancela cualquier petición activa al desmontar el hook
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Comprueba la configuración de Gemini en el servidor
   const checkStatus = useCallback(async () => {
@@ -85,7 +97,7 @@ export const useAiAnalyst = ({
     } catch {
       setStatus({
         isConfigured: false,
-        model: "gemini-2.5-flash",
+        model: "gemini-flash-lite-latest",
         maxPromptLength: 1000,
         maxHistoryTurns: 6,
       });
@@ -165,24 +177,39 @@ export const useAiAnalyst = ({
     return context;
   }, [coins, globalData, historicalData, includePortfolio, portfolioDistribution, portfolioSummary, selectedCoin]);
 
-  // Envía un mensaje a la IA
-  const sendMessage = useCallback(
-    async (prompt: string) => {
-      const trimmed = prompt.trim();
-      if (!trimmed || isGenerating) return;
+  // Cancela cualquier consulta activa en vuelo
+  const cancelGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsGenerating(false);
+  }, []);
 
+  // Envía un mensaje a la IA con control de orden secuencial
+  const sendMessage = useCallback(
+    async (prompt: string, fallbackToDegraded = false) => {
+      const trimmed = prompt.trim();
+      if (!trimmed) return;
+
+      // Si había una petición previa en curso, se cancela para evitar respuestas desordenadas
+      cancelGeneration();
+
+      const requestId = ++currentRequestIdRef.current;
       lastPromptRef.current = trimmed;
       setError(null);
 
-      // Crea y añade el mensaje del usuario inmediatamente en la interfaz
-      const userMessage: AiChatMessage = {
-        id: `user-${Date.now()}`,
-        role: "user",
-        text: trimmed,
-        timestamp: Date.now(),
-      };
+      // Si no es petición de modo degradado, añade el mensaje del usuario inmediatamente al historial
+      if (!fallbackToDegraded) {
+        const userMessage: AiChatMessage = {
+          id: `user-${Date.now()}-${requestId}`,
+          role: "user",
+          text: trimmed,
+          timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, userMessage]);
+      }
 
-      setMessages((prev) => [...prev, userMessage]);
       setIsGenerating(true);
 
       const controller = new AbortController();
@@ -191,7 +218,7 @@ export const useAiAnalyst = ({
       try {
         const context = buildContext();
 
-        // Filtra el historial para enviarlo al modelo (excluye errores y el mensaje de bienvenida)
+        // Filtra el historial para enviarlo al modelo (excluye errores y bienvenida)
         const historyForApi = messages
           .filter((m) => m.id !== "welcome-msg" && !m.isError)
           .slice(-6)
@@ -201,11 +228,20 @@ export const useAiAnalyst = ({
           prompt: trimmed,
           context,
           history: historyForApi,
+          fallbackToDegraded,
           signal: controller.signal,
         });
 
+        // Verificación de orden: ignora la respuesta si llegó una petición más reciente
+        if (requestId !== currentRequestIdRef.current) {
+          return;
+        }
+
         // Construye etiqueta informativa sobre los datos utilizados
-        let contextTag = "Datos generales de mercado";
+        let contextTag = response.isDegraded
+          ? "Modo Degradado (Datos de terminal)"
+          : "Datos generales de mercado";
+
         if (selectedCoin) {
           contextTag = `Datos: ${selectedCoin.name} (${selectedCoin.symbol.toUpperCase()}) • ${formatDateTime(selectedCoin.last_updated, false)}`;
         }
@@ -214,18 +250,28 @@ export const useAiAnalyst = ({
         }
 
         const modelMessage: AiChatMessage = {
-          id: `model-${Date.now()}`,
+          id: `model-${Date.now()}-${requestId}`,
           role: "model",
           text: response.text,
           timestamp: response.timestamp,
           model: response.model,
           isCached: response.isCached,
+          isDegraded: response.isDegraded,
+          provider: response.provider,
           contextTag,
         };
 
         setMessages((prev) => [...prev, modelMessage]);
       } catch (err: unknown) {
-        if (err instanceof DOMException && err.name === "AbortError") {
+        // Verificación de orden o petición abortada
+        if (requestId !== currentRequestIdRef.current) {
+          return;
+        }
+
+        if (
+          (err instanceof Error && err.name === "AbortError") ||
+          (err instanceof AiAnalystError && err.code === "REQUEST_ABORTED")
+        ) {
           return;
         }
 
@@ -236,13 +282,15 @@ export const useAiAnalyst = ({
                 err instanceof Error ? err.message : "Error inesperado al conectar con el analista.",
                 "UNKNOWN_ERROR",
                 500,
+                undefined,
+                true,
               );
 
         setError(typedError);
 
-        // Añade un mensaje de error visible en el hilo de conversación
+        // Añade un mensaje de error visible preservando íntegro el historial previo
         const errorMessage: AiChatMessage = {
-          id: `error-${Date.now()}`,
+          id: `error-${Date.now()}-${requestId}`,
           role: "model",
           text: `⚠️ **No se pudo completar el análisis**: ${typedError.message}`,
           timestamp: Date.now(),
@@ -251,34 +299,40 @@ export const useAiAnalyst = ({
 
         setMessages((prev) => [...prev, errorMessage]);
       } finally {
-        setIsGenerating(false);
-        abortControllerRef.current = null;
+        if (requestId === currentRequestIdRef.current) {
+          setIsGenerating(false);
+          abortControllerRef.current = null;
+        }
       }
     },
-    [buildContext, isGenerating, messages, selectedCoin],
+    [buildContext, cancelGeneration, messages, selectedCoin],
   );
 
-  // Reintenta la última consulta enviada
+  // Reintenta la última consulta enviada utilizando el modelo de IA
   const retryLastMessage = useCallback(async () => {
     if (lastPromptRef.current) {
       // Elimina el último mensaje de error si existe
       setMessages((prev) => (prev[prev.length - 1]?.isError ? prev.slice(0, -1) : prev));
-      await sendMessage(lastPromptRef.current);
+      await sendMessage(lastPromptRef.current, false);
     }
   }, [sendMessage]);
 
-  // Cancela una solicitud en curso
-  const cancelGeneration = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      setIsGenerating(false);
+  // Carga el análisis en modo degradado (datos deterministas de la terminal) para la última consulta
+  const loadDegradedMode = useCallback(async () => {
+    if (lastPromptRef.current) {
+      // Elimina el último mensaje de error si existe
+      setMessages((prev) => (prev[prev.length - 1]?.isError ? prev.slice(0, -1) : prev));
+      setError(null);
+      await sendMessage(lastPromptRef.current, true);
     }
-  }, []);
+  }, [sendMessage]);
 
   // Reinicia la conversación al estado inicial
   const clearConversation = useCallback(() => {
     cancelGeneration();
     setError(null);
+    lastPromptRef.current = "";
+    currentRequestIdRef.current = 0;
     setMessages([
       {
         ...WELCOME_MESSAGE,
@@ -298,6 +352,7 @@ export const useAiAnalyst = ({
     sendMessage,
     clearConversation,
     retryLastMessage,
+    loadDegradedMode,
     cancelGeneration,
     checkStatus,
   };

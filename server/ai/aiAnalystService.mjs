@@ -1,9 +1,12 @@
 // Servicio orquestador del AI Crypto Analyst
-// Aplica validaciones de entrada, control de concurrencia, caché en memoria y límites de cuota
+// Aplica validaciones de entrada, control de concurrencia, caché en memoria, límites de cuota y fallback
 
 import crypto from 'node:crypto';
 import { buildMarketContextString } from './promptBuilder.mjs';
 import { generateAnalystResponse, GeminiAdapterError } from './geminiAdapter.mjs';
+import { generateDegradedResponse } from './providers/degradedModeProvider.mjs';
+import { PRIMARY_DEFAULT_MODEL } from './providers/geminiProvider.mjs';
+import { AiProviderError } from './providers/aiProviderInterface.mjs';
 
 export const MAX_PROMPT_LENGTH = 1000;
 export const MAX_HISTORY_TURNS = 6;
@@ -43,7 +46,8 @@ function checkRateLimit() {
     throw new GeminiAdapterError(
       'Has alcanzado el límite de consultas permitidas por minuto (15 req/min). Por favor, espera unos segundos.',
       'LOCAL_RATE_LIMIT_EXCEEDED',
-      429
+      429,
+      true
     );
   }
 
@@ -68,25 +72,26 @@ function computeCacheKey(prompt, context) {
  */
 export function validateAnalystRequest(body) {
   if (!body || typeof body !== 'object') {
-    throw new GeminiAdapterError('El cuerpo de la petición debe ser un objeto JSON válido.', 'BAD_REQUEST', 400);
+    throw new GeminiAdapterError('El cuerpo de la petición debe ser un objeto JSON válido.', 'BAD_REQUEST', 400, false);
   }
 
-  const { prompt, history, context } = body;
+  const { prompt, history, context, fallbackToDegraded } = body;
 
   if (!prompt || typeof prompt !== 'string') {
-    throw new GeminiAdapterError('El campo "prompt" es obligatorio y debe ser una cadena de texto.', 'INVALID_PROMPT', 400);
+    throw new GeminiAdapterError('El campo "prompt" es obligatorio y debe ser una cadena de texto.', 'INVALID_PROMPT', 400, false);
   }
 
   const trimmed = prompt.trim();
   if (trimmed.length === 0) {
-    throw new GeminiAdapterError('La consulta no puede estar vacía.', 'INVALID_PROMPT', 400);
+    throw new GeminiAdapterError('La consulta no puede estar vacía.', 'INVALID_PROMPT', 400, false);
   }
 
   if (trimmed.length > MAX_PROMPT_LENGTH) {
     throw new GeminiAdapterError(
       `La consulta supera la longitud máxima permitida (${MAX_PROMPT_LENGTH} caracteres).`,
       'PROMPT_TOO_LONG',
-      400
+      400,
+      false
     );
   }
 
@@ -110,22 +115,42 @@ export function validateAnalystRequest(body) {
     prompt: trimmed,
     history: sanitizedHistory,
     context: sanitizedContext,
+    fallbackToDegraded: Boolean(fallbackToDegraded),
   };
 }
 
 /**
- * Procesa la consulta analítica ejecutando las políticas de seguridad, caché y Gemini.
+ * Verifica si un proveedor secundario está formalmente configurado y disponible.
+ * Regla: NUNCA se intenta invocar un proveedor alternativo si su clave o configuración no existe.
+ */
+export function isSecondaryProviderConfigured() {
+  const secondaryKey = process.env.SECONDARY_AI_KEY || '';
+  return secondaryKey.trim().length > 0;
+}
+
+/**
+ * Procesa la consulta analítica ejecutando las políticas de seguridad, caché, Gemini y fallback controlado.
  */
 export async function processAnalystQuery(rawBody, options = {}) {
   // 1. Validación de entradas
-  const { prompt, history, context } = validateAnalystRequest(rawBody);
+  const { prompt, history, context, fallbackToDegraded } = validateAnalystRequest(rawBody);
+
+  // Si se solicita directamente modo degradado determinista sin invocar proveedores
+  if (fallbackToDegraded) {
+    return generateDegradedResponse({
+      prompt,
+      context,
+      reason: 'Solicitado explícitamente por el usuario',
+    });
+  }
 
   // 2. Control de concurrencia
   if (activeRequestsCount >= MAX_CONCURRENT_REQUESTS) {
     throw new GeminiAdapterError(
       'Hay demasiadas consultas analizándose simultáneamente. Por favor, reintenta en un instante.',
       'CONCURRENT_LIMIT_EXCEEDED',
-      429
+      429,
+      true
     );
   }
 
@@ -146,7 +171,7 @@ export async function processAnalystQuery(rawBody, options = {}) {
   // 5. Construcción del texto de contexto de mercado verificado
   const marketContextText = buildMarketContextString(context);
 
-  // 6. Invocación a Gemini
+  // 6. Invocación al proveedor primario (Gemini)
   activeRequestsCount++;
   try {
     const result = await generateAnalystResponse({
@@ -155,11 +180,13 @@ export async function processAnalystQuery(rawBody, options = {}) {
       conversationHistory: history,
       clientOverride: options.clientOverride,
       timeoutMs: options.timeoutMs,
+      signal: options.signal,
     });
 
     const responsePayload = {
       ...result,
       isCached: false,
+      isDegraded: false,
       contextSummary: {
         hasAssetData: Boolean(context.asset),
         hasGlobalData: Boolean(context.global),
@@ -175,6 +202,49 @@ export async function processAnalystQuery(rawBody, options = {}) {
     });
 
     return responsePayload;
+  } catch (primaryErr) {
+    // Si el error fue por cancelación del usuario, no ejecutar fallbacks
+    if (primaryErr?.code === 'REQUEST_ABORTED') {
+      throw primaryErr;
+    }
+
+    // Comprobar proveedor secundario si estuviese configurado
+    if (isSecondaryProviderConfigured() && typeof options.secondaryProviderFn === 'function') {
+      try {
+        const secondaryResult = await options.secondaryProviderFn({
+          prompt,
+          marketContextText,
+          conversationHistory: history,
+        });
+        return {
+          ...secondaryResult,
+          isCached: false,
+          isDegraded: false,
+        };
+      } catch {
+        // El proveedor secundario también falló; continúa hacia el modo degradado o propagación
+      }
+    }
+
+    // Si las opciones autorizan fallback automático a modo degradado ante fallos de proveedor
+    if (options.autoFallbackToDegraded) {
+      return generateDegradedResponse({
+        prompt,
+        context,
+        reason: primaryErr.message || 'Fallo de conectividad con Gemini',
+      });
+    }
+
+    // Re-lanza el error tipado para que el cliente maneje el reintento o informe con precisión
+    if (primaryErr instanceof AiProviderError) {
+      throw primaryErr;
+    }
+    throw new GeminiAdapterError(
+      primaryErr?.message || 'Error inesperado al procesar la consulta con el proveedor de IA.',
+      'AI_PROVIDER_ERROR',
+      primaryErr?.statusCode || 500,
+      Boolean(primaryErr?.retryable)
+    );
   } finally {
     activeRequestsCount = Math.max(0, activeRequestsCount - 1);
   }
@@ -186,13 +256,14 @@ export async function processAnalystQuery(rawBody, options = {}) {
 export function getAnalystStatus() {
   const apiKey = process.env.GEMINI_API_KEY || '';
   const isConfigured = apiKey.trim().length > 0;
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = process.env.GEMINI_MODEL || PRIMARY_DEFAULT_MODEL;
 
   return {
     isConfigured,
     model,
     maxPromptLength: MAX_PROMPT_LENGTH,
     maxHistoryTurns: MAX_HISTORY_TURNS,
+    secondaryConfigured: isSecondaryProviderConfigured(),
   };
 }
 
