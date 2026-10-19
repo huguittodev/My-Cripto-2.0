@@ -74,6 +74,7 @@ export const AppLayout: FC<AppLayoutProps> = ({
         <footer className="py-6 px-4 sm:px-8 border-t border-crypto-border text-center text-xs text-crypto-text-muted">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="My Crypto 2.0" className="w-4 h-4 object-contain opacity-80" />
               <span className="font-semibold text-crypto-text-secondary">My Crypto 2.0</span>
               <span>—</span>
               <span>Terminal de investigación y seguimiento financiero</span>

@@ -171,30 +171,42 @@ export const Sidebar: FC<SidebarProps> = ({
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-crypto-surface border-r border-crypto-border">
-      {/* Brand Header */}
-      <div className="h-16 px-5 flex items-center justify-between border-b border-crypto-border">
+      {/* Cabecera de marca con logotipo y versión */}
+      <div className="h-16 px-4 sm:px-5 flex items-center justify-between border-b border-crypto-border">
         {!isCollapsed ? (
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crypto-primary to-crypto-accent flex items-center justify-center font-bold text-white shadow-sm shadow-crypto-primary/20">
-              <span className="text-sm font-mono tracking-tighter">MC</span>
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Logotipo oficial de My Crypto 2.0 */}
+            <div className="relative flex items-center justify-center flex-shrink-0">
+              <img
+                src="/logo.png"
+                alt="My Crypto 2.0"
+                className="w-9 h-9 object-contain drop-shadow-[0_0_10px_rgba(59,130,246,0.35)] transition-transform duration-200 hover:scale-105"
+              />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-sm tracking-tight text-crypto-text">
-                  My Crypto
+                  My <span className="text-crypto-accent">Crypto</span>
                 </span>
-                <span className="text-xs font-mono font-semibold px-1 rounded bg-crypto-primary-soft text-crypto-accent border border-crypto-accent/20">
+                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-full bg-crypto-primary-soft text-crypto-accent border border-crypto-accent/30 shadow-sm shadow-crypto-primary/20">
                   2.0
                 </span>
               </div>
-              <span className="text-[10px] text-crypto-text-muted font-mono tracking-widest block uppercase">
+              <span className="text-[9px] text-crypto-text-muted font-mono tracking-[0.18em] uppercase font-semibold flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-crypto-accent inline-block animate-pulse" />
                 Terminal
               </span>
             </div>
           </div>
         ) : (
-          <div className="mx-auto w-8 h-8 rounded-lg bg-gradient-to-br from-crypto-primary to-crypto-accent flex items-center justify-center font-bold text-white">
-            <span className="text-sm font-mono">MC</span>
+          /* Logotipo centrado para barra lateral compacta */
+          <div className="mx-auto flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="My Crypto 2.0"
+              title="My Crypto 2.0"
+              className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(59,130,246,0.3)] transition-transform duration-200 hover:scale-110"
+            />
           </div>
         )}
 
