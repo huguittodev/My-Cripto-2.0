@@ -39,19 +39,19 @@ export const MarketPagination: FC<MarketPaginationProps> = ({
 
       {/* Controles de avance / retroceso de página */}
       {!isSearchMode && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
             onClick={() => onChangePage(Math.max(1, page - 1))}
             disabled={page <= 1 || isLoading}
             aria-label="Página anterior"
-            className="px-3 py-1.5 rounded-lg bg-crypto-surface-raised text-crypto-text border border-crypto-border hover:bg-crypto-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-mono font-medium flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-crypto-surface-raised text-crypto-text border border-crypto-border hover:bg-crypto-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-mono font-medium flex items-center gap-1.5 cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             <span>←</span>
             <span>Anterior</span>
           </button>
 
-          <span className="px-3 py-1 rounded-md bg-crypto-surface-hover text-crypto-text font-mono font-bold text-xs border border-crypto-border">
+          <span className="px-3 py-1 rounded-md bg-crypto-surface-hover text-crypto-text font-mono font-bold text-xs border border-crypto-border whitespace-nowrap flex-shrink-0">
             Pág. {page}
           </span>
 
@@ -60,7 +60,7 @@ export const MarketPagination: FC<MarketPaginationProps> = ({
             onClick={() => onChangePage(page + 1)}
             disabled={!hasMore || isLoading}
             aria-label="Página siguiente"
-            className="px-3 py-1.5 rounded-lg bg-crypto-surface-raised text-crypto-text border border-crypto-border hover:bg-crypto-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-mono font-medium flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-crypto-surface-raised text-crypto-text border border-crypto-border hover:bg-crypto-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-mono font-medium flex items-center gap-1.5 cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             <span>Siguiente</span>
             <span>→</span>

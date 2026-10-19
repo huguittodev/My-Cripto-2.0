@@ -340,15 +340,15 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-crypto-surface-raised/80 border-b border-crypto-border text-[11px] font-mono uppercase tracking-wider text-crypto-text-muted select-none">
                   <tr>
-                    <th className="py-3 px-3 text-center w-10">★</th>
-                    <th className="py-3 px-3 sm:px-4 text-center w-12">#</th>
-                    <th className="py-3 px-3 sm:px-4">Activo</th>
-                    <th className="py-3 px-3 sm:px-4 text-right">Precio</th>
-                    <th className="py-3 px-3 sm:px-4 text-right">24 h</th>
-                    <th className="hidden sm:table-cell py-3 px-3 sm:px-4 text-right">Capitalización</th>
-                    <th className="hidden md:table-cell py-3 px-3 sm:px-4 text-right">Volumen 24 h</th>
-                    <th className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center">Últimos 7 días</th>
-                    <th className="py-3 px-3 sm:px-4 text-center">Acción</th>
+                    <th className="py-3 px-3 text-center w-10 whitespace-nowrap">★</th>
+                    <th className="py-3 px-3 sm:px-4 text-center w-12 whitespace-nowrap">#</th>
+                    <th className="py-3 px-3 sm:px-4 whitespace-nowrap">Activo</th>
+                    <th className="py-3 px-3 sm:px-4 text-right whitespace-nowrap">Precio</th>
+                    <th className="py-3 px-3 sm:px-4 text-right whitespace-nowrap">24 h</th>
+                    <th className="hidden sm:table-cell py-3 px-3 sm:px-4 text-right whitespace-nowrap">Capitalización</th>
+                    <th className="hidden md:table-cell py-3 px-3 sm:px-4 text-right whitespace-nowrap">Volumen 24 h</th>
+                    <th className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center whitespace-nowrap">Últimos 7 días</th>
+                    <th className="py-3 px-3 sm:px-4 text-center whitespace-nowrap">Acción</th>
                   </tr>
                 </thead>
 
@@ -366,7 +366,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                         }`}
                       >
                         {/* Botón de Favorito */}
-                        <td className="py-3.5 px-3 text-center">
+                        <td className="py-3.5 px-3 text-center whitespace-nowrap">
                           <FavoriteButton
                             coinId={coin.id}
                             coinName={coin.name}
@@ -377,7 +377,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                         </td>
 
                         {/* Ranking */}
-                        <td className="py-3.5 px-3 sm:px-4 text-center font-mono text-xs text-crypto-text-muted">
+                        <td className="py-3.5 px-3 sm:px-4 text-center font-mono text-xs text-crypto-text-muted whitespace-nowrap">
                           {hasMarketData && coin.market_cap_rank ? formatRank(coin.market_cap_rank) : "—"}
                         </td>
 
@@ -400,7 +400,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                               <div className="font-semibold text-crypto-text text-xs sm:text-sm truncate">
                                 {coin.name}
                               </div>
-                              <span className="text-[11px] text-crypto-text-muted uppercase font-mono font-medium">
+                              <span className="text-[11px] text-crypto-text-muted uppercase font-mono font-medium whitespace-nowrap">
                                 {coin.symbol.toUpperCase()}
                               </span>
                             </div>
@@ -408,7 +408,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                         </td>
 
                         {/* Precio Actual */}
-                        <td className="py-3.5 px-3 sm:px-4 text-right font-mono font-bold text-crypto-text tabular-nums">
+                        <td className="py-3.5 px-3 sm:px-4 text-right font-mono font-bold text-crypto-text tabular-nums whitespace-nowrap">
                           {hasMarketData ? (
                             formatCurrency(coin.current_price, currency)
                           ) : (
@@ -417,28 +417,28 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                         </td>
 
                         {/* Variación 24h */}
-                        <td className="py-3.5 px-3 sm:px-4 text-right">
+                        <td className="py-3.5 px-3 sm:px-4 text-right whitespace-nowrap">
                           {hasMarketData ? (
                             <VariationBadge value={coin.price_change_percentage_24h} size="sm" />
                           ) : (
-                            <span className="text-[10px] font-mono text-crypto-text-muted px-1.5 py-0.5 rounded bg-crypto-surface-raised border border-crypto-border/50">
+                            <span className="text-[10px] font-mono text-crypto-text-muted px-1.5 py-0.5 rounded bg-crypto-surface-raised border border-crypto-border/50 whitespace-nowrap">
                               No disponible
                             </span>
                           )}
                         </td>
 
                         {/* Capitalización */}
-                        <td className="hidden sm:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
+                        <td className="hidden sm:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums whitespace-nowrap">
                           {hasMarketData && coin.market_cap ? formatCompactNumber(coin.market_cap, currency) : "—"}
                         </td>
 
                         {/* Volumen 24h */}
-                        <td className="hidden md:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
+                        <td className="hidden md:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums whitespace-nowrap">
                           {hasMarketData && coin.total_volume ? formatCompactNumber(coin.total_volume, currency) : "—"}
                         </td>
 
                         {/* Minigráfico de 7 días */}
-                        <td className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center">
+                        <td className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center whitespace-nowrap">
                           {hasMarketData && coin.sparkline_in_7d?.price ? (
                             <MarketSparkline
                               prices={coin.sparkline_in_7d?.price}
@@ -452,7 +452,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                         </td>
 
                         {/* Acción: Seleccionar activo */}
-                        <td className="py-3.5 px-3 sm:px-4 text-center">
+                        <td className="py-3.5 px-3 sm:px-4 text-center whitespace-nowrap">
                           <button
                             type="button"
                             onClick={(e) => {

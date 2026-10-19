@@ -33,8 +33,9 @@ export const MarketMetricsRow: FC<MarketMetricsRowProps> = ({
         coins.length
       : 0;
 
+  // Distribución responsive adaptada al ancho disponible (evita compresión extrema en breakpoints con sidebar)
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {/* Métrica 1: Capitalización Total del Mercado */}
       <MetricCard
         label="Cap. Total Mercado"
@@ -89,7 +90,7 @@ export const MarketMetricsRow: FC<MarketMetricsRowProps> = ({
         }
         badge={
           leaderCoin && !isLoading ? (
-            <span className="text-[11px] font-mono text-crypto-text-muted">
+            <span className="text-[11px] font-mono text-crypto-text-muted whitespace-nowrap">
               BTC: {formatCurrency(leaderCoin.current_price, currency)}
             </span>
           ) : undefined
@@ -103,7 +104,7 @@ export const MarketMetricsRow: FC<MarketMetricsRowProps> = ({
         accentColor="accent"
       />
 
-      {/* Métrica 4: Variación Global del Mercado (24h) */}
+      {/* Métrica 4: Variación Global del Mercado (24h) - Porcentaje indivisible en una única línea */}
       <MetricCard
         label="Variación Global (24h)"
         value={

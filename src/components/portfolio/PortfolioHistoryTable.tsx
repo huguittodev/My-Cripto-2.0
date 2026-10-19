@@ -93,15 +93,15 @@ export const PortfolioHistoryTable: FC<PortfolioHistoryTableProps> = ({
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-crypto-surface-raised/50 border-b border-crypto-border text-crypto-text-muted font-mono uppercase text-[11px] tracking-wider">
-              <th className="py-3 px-4 font-semibold">Fecha / Hora</th>
-              <th className="py-3 px-4 font-semibold">Tipo</th>
-              <th className="py-3 px-4 font-semibold">Activo</th>
-              <th className="py-3 px-4 font-semibold text-right">Cantidad</th>
-              <th className="py-3 px-4 font-semibold text-right">Precio Unitario</th>
-              <th className="py-3 px-4 font-semibold text-right">Comisión</th>
-              <th className="py-3 px-4 font-semibold text-right">Total Transacción</th>
-              <th className="py-3 px-4 font-semibold">Notas</th>
-              <th className="py-3 px-4 font-semibold text-center">Acciones</th>
+              <th className="py-3 px-4 font-semibold whitespace-nowrap">Fecha / Hora</th>
+              <th className="py-3 px-4 font-semibold whitespace-nowrap">Tipo</th>
+              <th className="py-3 px-4 font-semibold whitespace-nowrap">Activo</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Cantidad</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Precio Unitario</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Comisión</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Total Transacción</th>
+              <th className="py-3 px-4 font-semibold whitespace-nowrap">Notas</th>
+              <th className="py-3 px-4 font-semibold text-center whitespace-nowrap">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-crypto-border/60">
@@ -122,7 +122,7 @@ export const PortfolioHistoryTable: FC<PortfolioHistoryTableProps> = ({
                   {/* Tipo de Operación */}
                   <td className="py-3 px-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center gap-1 font-mono font-bold text-[10px] uppercase px-2 py-0.5 rounded ${
+                      className={`inline-flex items-center gap-1 font-mono font-bold text-[10px] uppercase px-2 py-0.5 rounded whitespace-nowrap ${
                         isBuy
                           ? "bg-crypto-positive-soft text-crypto-positive border border-crypto-positive/20"
                           : "bg-crypto-primary-soft text-crypto-accent border border-crypto-accent/20"
@@ -134,12 +134,12 @@ export const PortfolioHistoryTable: FC<PortfolioHistoryTableProps> = ({
                   </td>
 
                   {/* Activo */}
-                  <td className="py-3 px-4 font-mono font-bold text-crypto-text uppercase">
+                  <td className="py-3 px-4 font-mono font-bold text-crypto-text uppercase whitespace-nowrap">
                     {tx.coinId}
                   </td>
 
                   {/* Cantidad */}
-                  <td className="py-3 px-4 text-right font-mono text-crypto-text font-medium">
+                  <td className="py-3 px-4 text-right font-mono text-crypto-text font-medium whitespace-nowrap">
                     {tx.amount.toLocaleString("es-ES", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 8,
@@ -147,17 +147,17 @@ export const PortfolioHistoryTable: FC<PortfolioHistoryTableProps> = ({
                   </td>
 
                   {/* Precio Unitario */}
-                  <td className="py-3 px-4 text-right font-mono text-crypto-text-secondary">
+                  <td className="py-3 px-4 text-right font-mono text-crypto-text-secondary whitespace-nowrap">
                     {formatCurrency(tx.pricePerUnit, currency)}
                   </td>
 
                   {/* Comisión */}
-                  <td className="py-3 px-4 text-right font-mono text-crypto-text-muted">
+                  <td className="py-3 px-4 text-right font-mono text-crypto-text-muted whitespace-nowrap">
                     {tx.fee > 0 ? formatCurrency(tx.fee, currency) : formatCurrency(0, currency)}
                   </td>
 
                   {/* Total Transacción */}
-                  <td className="py-3 px-4 text-right font-mono font-bold text-crypto-text">
+                  <td className="py-3 px-4 text-right font-mono font-bold text-crypto-text whitespace-nowrap">
                     {formatCurrency(effectiveTotal, currency)}
                   </td>
 

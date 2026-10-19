@@ -150,13 +150,13 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
         <div className="flex items-center gap-2.5">
           <span className="text-crypto-text-muted font-mono uppercase text-[10px]">Contexto Activo:</span>
           {activeCoin ? (
-            <div className="flex items-center gap-2 bg-crypto-surface-raised px-2.5 py-1 rounded-lg border border-crypto-border/60">
+            <div className="flex items-center gap-2 bg-crypto-surface-raised px-2.5 py-1 rounded-lg border border-crypto-border/60 max-w-full">
               {activeCoin.image && (
-                <img src={activeCoin.image} alt={activeCoin.name} className="w-4 h-4 rounded-full object-contain" />
+                <img src={activeCoin.image} alt={activeCoin.name} className="w-4 h-4 rounded-full object-contain flex-shrink-0" />
               )}
-              <span className="font-bold text-crypto-text">{activeCoin.name}</span>
-              <span className="text-crypto-text-muted uppercase font-mono text-[10px]">{activeCoin.symbol}</span>
-              <span className="font-mono text-crypto-accent">{formatCurrency(activeCoin.current_price)}</span>
+              <span className="font-bold text-crypto-text truncate">{activeCoin.name}</span>
+              <span className="text-crypto-text-muted uppercase font-mono text-[10px] flex-shrink-0">{activeCoin.symbol}</span>
+              <span className="font-mono text-crypto-accent whitespace-nowrap flex-shrink-0">{formatCurrency(activeCoin.current_price)}</span>
             </div>
           ) : (
             <span className="text-crypto-text-muted">Ningún activo fijado</span>

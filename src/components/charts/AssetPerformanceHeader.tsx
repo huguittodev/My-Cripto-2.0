@@ -56,7 +56,7 @@ export const AssetPerformanceHeader: FC<AssetPerformanceHeaderProps> = ({
           <span className="text-[11px] text-crypto-text-muted block">
             {hoveredPoint ? "Precio en punto inspeccionado" : "Precio de cierre del periodo"}
           </span>
-          <span className="text-lg sm:text-xl font-bold text-crypto-text tabular-nums">
+          <span className="text-lg sm:text-xl font-bold text-crypto-text tabular-nums whitespace-nowrap">
             {formatCurrency(displayPrice, currency)}
           </span>
         </div>
@@ -64,7 +64,7 @@ export const AssetPerformanceHeader: FC<AssetPerformanceHeaderProps> = ({
         {displayDate && (
           <div className="hidden sm:block border-l border-crypto-border/60 pl-3">
             <span className="text-[10px] text-crypto-text-muted block">Fecha y hora</span>
-            <span className="text-xs text-crypto-accent font-medium">
+            <span className="text-xs text-crypto-accent font-medium whitespace-nowrap">
               {displayDate}
             </span>
           </div>
@@ -74,11 +74,11 @@ export const AssetPerformanceHeader: FC<AssetPerformanceHeaderProps> = ({
       {/* Métricas de rendimiento del periodo seleccionado */}
       <div className="flex items-center gap-3 self-end sm:self-center">
         <div className="text-right">
-          <span className="text-[11px] text-crypto-text-muted block">
+          <span className="text-[11px] text-crypto-text-muted block whitespace-nowrap">
             Rendimiento {TIMEFRAME_LABELS[days]}
           </span>
           <span
-            className={`text-xs font-semibold tabular-nums ${
+            className={`text-xs font-semibold tabular-nums whitespace-nowrap ${
               pointDeltaAbsolute >= 0
                 ? "text-crypto-positive"
                 : "text-crypto-negative"

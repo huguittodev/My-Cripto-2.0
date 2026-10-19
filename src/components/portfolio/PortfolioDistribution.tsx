@@ -71,15 +71,15 @@ export const PortfolioDistribution: FC<PortfolioDistributionProps> = ({
           return (
             <div
               key={item.coinId}
-              className="flex items-center gap-2 bg-crypto-surface-hover/60 border border-crypto-border/60 rounded-lg px-2.5 py-1.5 text-xs"
+              className="flex items-center gap-2 bg-crypto-surface-hover/60 border border-crypto-border/60 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap flex-shrink-0"
             >
               <span className={`w-2.5 h-2.5 rounded-full ${colorClass} flex-shrink-0`} />
-              <span className="font-bold text-crypto-text font-mono">{item.symbol}</span>
+              <span className="font-bold text-crypto-text font-mono whitespace-nowrap">{item.symbol}</span>
               <span className="text-crypto-text-muted">·</span>
-              <span className="text-crypto-accent font-mono font-medium">
+              <span className="text-crypto-accent font-mono font-medium whitespace-nowrap">
                 {formatPercentage(item.percentage, false)}
               </span>
-              <span className="text-crypto-text-secondary font-mono text-[11px]">
+              <span className="text-crypto-text-secondary font-mono text-[11px] whitespace-nowrap">
                 ({formatCurrency(item.value)})
               </span>
             </div>

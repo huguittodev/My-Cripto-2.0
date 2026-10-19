@@ -90,16 +90,16 @@ export const AlertCard: FC<AlertCardProps> = ({
         </div>
 
         {/* Badge de Estado */}
-        <div>
+        <div className="flex-shrink-0">
           {alert.status === "active" && <StatusBadge variant="live">Activa</StatusBadge>}
           {alert.status === "triggered" && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-crypto-warning/15 text-crypto-warning border border-crypto-warning/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-crypto-warning animate-pulse" />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-crypto-warning/15 text-crypto-warning border border-crypto-warning/30 whitespace-nowrap flex-shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-crypto-warning animate-pulse flex-shrink-0" />
               Disparada
             </span>
           )}
           {alert.status === "inactive" && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-crypto-surface-raised text-crypto-text-muted border border-crypto-border">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-crypto-surface-raised text-crypto-text-muted border border-crypto-border whitespace-nowrap flex-shrink-0">
               Pausada
             </span>
           )}
@@ -109,30 +109,30 @@ export const AlertCard: FC<AlertCardProps> = ({
       {/* 2. Cuerpo: Precio Objetivo vs Precio de Mercado */}
       <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-crypto-surface-raised/70 border border-crypto-border/50 text-xs font-mono">
         <div>
-          <span className="text-[10px] text-crypto-text-muted block uppercase tracking-wider">
+          <span className="text-[10px] text-crypto-text-muted block uppercase tracking-wider whitespace-nowrap">
             Condición y Objetivo
           </span>
-          <div className="flex items-center gap-1.5 mt-1 font-bold text-sm text-crypto-text">
-            <span>{conditionIcon}</span>
-            <span className="text-crypto-accent">
+          <div className="flex items-center gap-1.5 mt-1 font-bold text-sm text-crypto-text whitespace-nowrap">
+            <span className="flex-shrink-0">{conditionIcon}</span>
+            <span className="text-crypto-accent whitespace-nowrap">
               {formatCurrency(alert.targetPrice, alert.currency.toUpperCase())}
             </span>
           </div>
-          <span className="text-[10px] text-crypto-text-muted block mt-0.5">
+          <span className="text-[10px] text-crypto-text-muted block mt-0.5 whitespace-nowrap">
             {conditionText}
           </span>
         </div>
 
         <div className="text-right">
-          <span className="text-[10px] text-crypto-text-muted block uppercase tracking-wider">
+          <span className="text-[10px] text-crypto-text-muted block uppercase tracking-wider whitespace-nowrap">
             Cotización Actual
           </span>
-          <div className="font-bold text-sm text-crypto-text mt-1">
+          <div className="font-bold text-sm text-crypto-text mt-1 whitespace-nowrap">
             {currentPrice !== null ? formatCurrency(currentPrice, alert.currency.toUpperCase()) : "—"}
           </div>
           {distanceText && (
             <span
-              className={`text-[10px] block mt-0.5 font-medium ${
+              className={`text-[10px] block mt-0.5 font-medium whitespace-nowrap ${
                 alert.status === "triggered"
                   ? "text-crypto-warning font-semibold"
                   : isDistancePositive
@@ -149,12 +149,12 @@ export const AlertCard: FC<AlertCardProps> = ({
       {/* 3. Información de Disparo o Notas */}
       {alert.status === "triggered" && alert.triggeredAt && (
         <div className="p-2.5 rounded-lg bg-crypto-warning/10 border border-crypto-warning/20 text-xs text-crypto-warning flex items-start gap-2">
-          <span>🚨</span>
+          <span className="flex-shrink-0">🚨</span>
           <div className="flex-1">
             <span className="font-semibold block">Alerta activada:</span>
             <span className="text-[11px] opacity-90 block">
               Registrado el {formatDateTime(alert.triggeredAt)} con precio observado de{" "}
-              <strong>
+              <strong className="whitespace-nowrap">
                 {alert.triggeredPrice !== undefined
                   ? formatCurrency(alert.triggeredPrice, alert.currency.toUpperCase())
                   : "—"}

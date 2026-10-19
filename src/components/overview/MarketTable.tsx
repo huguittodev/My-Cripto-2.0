@@ -199,12 +199,12 @@ export const MarketTable: FC<MarketTableProps> = ({
             <thead className="bg-crypto-surface-raised/80 border-b border-crypto-border text-[11px] font-mono uppercase tracking-wider text-crypto-text-muted select-none">
               <tr>
                 {/* 0. Favorito */}
-                <th className="py-3 px-2 sm:px-3 text-center w-10">★</th>
+                <th className="py-3 px-2 sm:px-3 text-center w-10 whitespace-nowrap">★</th>
 
                 {/* 1. Ranking */}
                 <th
                   onClick={() => handleSort("rank")}
-                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-center w-12"
+                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-center w-12 whitespace-nowrap"
                   aria-sort={sortField === "rank" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
                   <span className="flex items-center justify-center gap-1">
@@ -218,7 +218,7 @@ export const MarketTable: FC<MarketTableProps> = ({
                 {/* 2. Activo */}
                 <th
                   onClick={() => handleSort("name")}
-                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text"
+                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text whitespace-nowrap"
                   aria-sort={sortField === "name" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
                   <span className="flex items-center gap-1">
@@ -232,7 +232,7 @@ export const MarketTable: FC<MarketTableProps> = ({
                 {/* 3. Precio */}
                 <th
                   onClick={() => handleSort("price")}
-                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right"
+                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right whitespace-nowrap"
                   aria-sort={sortField === "price" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
                   <span className="flex items-center justify-end gap-1">
@@ -246,7 +246,7 @@ export const MarketTable: FC<MarketTableProps> = ({
                 {/* 4. Variación 24h */}
                 <th
                   onClick={() => handleSort("change")}
-                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right"
+                  className="py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right whitespace-nowrap"
                   aria-sort={sortField === "change" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
                   <span className="flex items-center justify-end gap-1">
@@ -260,7 +260,7 @@ export const MarketTable: FC<MarketTableProps> = ({
                 {/* 5. Capitalización */}
                 <th
                   onClick={() => handleSort("market_cap")}
-                  className="hidden sm:table-cell py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right"
+                  className="hidden sm:table-cell py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right whitespace-nowrap"
                   aria-sort={sortField === "market_cap" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
                   <span className="flex items-center justify-end gap-1">
@@ -274,7 +274,7 @@ export const MarketTable: FC<MarketTableProps> = ({
                 {/* 6. Volumen 24h */}
                 <th
                   onClick={() => handleSort("volume")}
-                  className="hidden md:table-cell py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right"
+                  className="hidden md:table-cell py-3 px-3 sm:px-4 cursor-pointer hover:text-crypto-text text-right whitespace-nowrap"
                   aria-sort={sortField === "volume" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
                   <span className="flex items-center justify-end gap-1">
@@ -286,12 +286,12 @@ export const MarketTable: FC<MarketTableProps> = ({
                 </th>
 
                 {/* 7. Últimos 7 días (Sparkline) */}
-                <th className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center">
+                <th className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center whitespace-nowrap">
                   Últimos 7 días
                 </th>
 
                 {/* 8. Acción */}
-                <th className="py-3 px-3 sm:px-4 text-center">Acción</th>
+                <th className="py-3 px-3 sm:px-4 text-center whitespace-nowrap">Acción</th>
               </tr>
             </thead>
 
@@ -320,7 +320,7 @@ export const MarketTable: FC<MarketTableProps> = ({
                     </td>
 
                     {/* 1. Ranking */}
-                    <td className="py-3.5 px-3 sm:px-4 text-center font-mono text-xs text-crypto-text-muted">
+                    <td className="py-3.5 px-3 sm:px-4 text-center font-mono text-xs text-crypto-text-muted whitespace-nowrap">
                       {formatRank(coin.market_cap_rank)}
                     </td>
 
@@ -337,7 +337,7 @@ export const MarketTable: FC<MarketTableProps> = ({
                           <div className="font-semibold text-crypto-text text-xs sm:text-sm truncate">
                             {coin.name}
                           </div>
-                          <span className="text-[11px] text-crypto-text-muted uppercase font-mono font-medium">
+                          <span className="text-[11px] text-crypto-text-muted uppercase font-mono font-medium whitespace-nowrap">
                             {coin.symbol}
                           </span>
                         </div>
@@ -345,27 +345,27 @@ export const MarketTable: FC<MarketTableProps> = ({
                     </td>
 
                     {/* 3. Precio */}
-                    <td className="py-3.5 px-3 sm:px-4 text-right font-mono font-bold text-crypto-text tabular-nums">
+                    <td className="py-3.5 px-3 sm:px-4 text-right font-mono font-bold text-crypto-text tabular-nums whitespace-nowrap">
                       {formatCurrency(coin.current_price, currency)}
                     </td>
 
                     {/* 4. Variación 24h */}
-                    <td className="py-3.5 px-3 sm:px-4 text-right">
+                    <td className="py-3.5 px-3 sm:px-4 text-right whitespace-nowrap">
                       <VariationBadge value={coin.price_change_percentage_24h} size="sm" />
                     </td>
 
                     {/* 5. Capitalización */}
-                    <td className="hidden sm:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
+                    <td className="hidden sm:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums whitespace-nowrap">
                       {formatCompactNumber(coin.market_cap, currency)}
                     </td>
 
                     {/* 6. Volumen 24h */}
-                    <td className="hidden md:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
+                    <td className="hidden md:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums whitespace-nowrap">
                       {coin.total_volume ? formatCompactNumber(coin.total_volume, currency) : "—"}
                     </td>
 
                     {/* 7. Minigráfico de 7 días */}
-                    <td className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center">
+                    <td className="hidden lg:table-cell py-3 px-3 sm:px-4 text-center whitespace-nowrap">
                       <MarketSparkline
                         prices={coin.sparkline_in_7d?.price}
                         coinName={coin.name}
@@ -375,14 +375,14 @@ export const MarketTable: FC<MarketTableProps> = ({
                     </td>
 
                     {/* 8. Acción */}
-                    <td className="py-3.5 px-3 sm:px-4 text-center">
+                    <td className="py-3.5 px-3 sm:px-4 text-center whitespace-nowrap">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectCoin(coin);
                         }}
-                        className={`px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors cursor-pointer ${
+                        className={`px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors cursor-pointer whitespace-nowrap ${
                           isSelected
                             ? "bg-crypto-primary text-white shadow-sm shadow-crypto-primary/30"
                             : "bg-crypto-surface-hover text-crypto-text-secondary hover:text-crypto-text hover:bg-crypto-surface-raised border border-crypto-border"

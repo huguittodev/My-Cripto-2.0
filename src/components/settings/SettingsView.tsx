@@ -293,25 +293,25 @@ export const SettingsView: FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
             <div className="p-2.5 rounded bg-crypto-surface border border-crypto-border/50">
               <span className="text-[10px] text-crypto-text-muted block mb-1">Precio Estándar</span>
-              <span className="font-mono font-bold text-xs text-crypto-text">
+              <span className="font-mono font-bold text-xs text-crypto-text whitespace-nowrap">
                 {formatCurrency(64850.25, currency)}
               </span>
             </div>
             <div className="p-2.5 rounded bg-crypto-surface border border-crypto-border/50">
               <span className="text-[10px] text-crypto-text-muted block mb-1">Micro-precio (8 dec)</span>
-              <span className="font-mono font-bold text-xs text-crypto-text">
+              <span className="font-mono font-bold text-xs text-crypto-text whitespace-nowrap">
                 {formatCurrency(0.00003456, currency)}
               </span>
             </div>
             <div className="p-2.5 rounded bg-crypto-surface border border-crypto-border/50">
               <span className="text-[10px] text-crypto-text-muted block mb-1">Cifra Compacta</span>
-              <span className="font-mono font-bold text-xs text-crypto-text">
+              <span className="font-mono font-bold text-xs text-crypto-text whitespace-nowrap">
                 {formatCompactNumber(1250000000, SUPPORTED_CURRENCIES[currency].symbol)}
               </span>
             </div>
             <div className="p-2.5 rounded bg-crypto-surface border border-crypto-border/50">
               <span className="text-[10px] text-crypto-text-muted block mb-1">Variación 24h</span>
-              <span className="font-mono font-bold text-xs text-crypto-positive">
+              <span className="font-mono font-bold text-xs text-crypto-positive whitespace-nowrap">
                 {formatPercentage(5.42, true)}
               </span>
             </div>

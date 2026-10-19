@@ -15,8 +15,9 @@ export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
   isLoadingPrices,
   currency = "EUR",
 }) => {
+  // Grid flexible adaptado: 1 col móvil, 2 cols tablet, 3 cols desktop medio, 5 cols desktop amplio
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       {/* 1. Valor Total Actual de la Cartera */}
       <MetricCard
         label="Valor Total de Cartera"
@@ -80,7 +81,7 @@ export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
         badge={
           summary.totalRealizedPnl !== 0 ? (
             <span
-              className={`text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+              className={`text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${
                 summary.totalRealizedPnl > 0
                   ? "bg-crypto-positive-soft text-crypto-positive"
                   : "bg-crypto-negative-soft text-crypto-negative"

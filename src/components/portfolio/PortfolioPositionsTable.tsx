@@ -62,15 +62,15 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-crypto-surface-raised/50 border-b border-crypto-border text-crypto-text-muted font-mono uppercase text-[11px] tracking-wider">
-              <th className="py-3 px-4 font-semibold">Activo</th>
-              <th className="py-3 px-4 font-semibold text-right">Cantidad</th>
-              <th className="py-3 px-4 font-semibold text-right">Coste Medio</th>
-              <th className="py-3 px-4 font-semibold text-right">Precio Actual</th>
-              <th className="py-3 px-4 font-semibold text-right">Valor Total</th>
-              <th className="py-3 px-4 font-semibold text-right">P&L No Realizado</th>
-              <th className="py-3 px-4 font-semibold text-right">P&L Realizado</th>
-              <th className="py-3 px-4 font-semibold text-right">Peso</th>
-              <th className="py-3 px-4 font-semibold text-center">Acciones</th>
+              <th className="py-3 px-4 font-semibold whitespace-nowrap">Activo</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Cantidad</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Coste Medio</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Precio Actual</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Valor Total</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">P&L No Realizado</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">P&L Realizado</th>
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">Peso</th>
+              <th className="py-3 px-4 font-semibold text-center whitespace-nowrap">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-crypto-border/60">
@@ -91,24 +91,24 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                         <img
                           src={pos.coinImage}
                           alt={pos.coinName || pos.coinId}
-                          className="w-6 h-6 rounded-full"
+                          className="w-6 h-6 rounded-full flex-shrink-0"
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-crypto-primary-soft text-crypto-accent flex items-center justify-center font-bold text-[10px] font-mono">
+                        <div className="w-6 h-6 rounded-full bg-crypto-primary-soft text-crypto-accent flex items-center justify-center font-bold text-[10px] font-mono flex-shrink-0">
                           {(pos.coinSymbol || pos.coinId).slice(0, 3).toUpperCase()}
                         </div>
                       )}
-                      <div>
-                        <div className="font-bold text-crypto-text flex items-center gap-1.5">
+                      <div className="min-w-0">
+                        <div className="font-bold text-crypto-text flex items-center gap-1.5 truncate">
                           <span>{pos.coinName || pos.coinId}</span>
                           {isClosed && (
-                            <span className="text-[10px] font-mono px-1 rounded bg-crypto-surface-raised text-crypto-text-muted">
+                            <span className="text-[10px] font-mono px-1 rounded bg-crypto-surface-raised text-crypto-text-muted whitespace-nowrap">
                               Liquidada
                             </span>
                           )}
                         </div>
-                        <span className="font-mono text-[11px] text-crypto-text-muted uppercase">
+                        <span className="font-mono text-[11px] text-crypto-text-muted uppercase whitespace-nowrap">
                           {pos.coinSymbol || pos.coinId}
                         </span>
                       </div>
@@ -116,7 +116,7 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                   </td>
 
                   {/* Cantidad poseída */}
-                  <td className="py-3.5 px-4 text-right font-mono text-crypto-text font-medium">
+                  <td className="py-3.5 px-4 text-right font-mono text-crypto-text font-medium whitespace-nowrap">
                     {pos.amount.toLocaleString("es-ES", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 8,
@@ -124,21 +124,21 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                   </td>
 
                   {/* Coste medio de compra FIFO */}
-                  <td className="py-3.5 px-4 text-right font-mono text-crypto-text-secondary">
+                  <td className="py-3.5 px-4 text-right font-mono text-crypto-text-secondary whitespace-nowrap">
                     {pos.amount > 0 ? formatCurrency(pos.averageBuyPrice, currency) : "—"}
                   </td>
 
                   {/* Precio de mercado actual */}
-                  <td className="py-3.5 px-4 text-right font-mono">
+                  <td className="py-3.5 px-4 text-right font-mono whitespace-nowrap">
                     {isLoadingPrices ? (
                       <span className="text-crypto-text-muted">...</span>
                     ) : pos.currentPrice !== null ? (
-                      <span className="text-crypto-text font-medium">
+                      <span className="text-crypto-text font-medium whitespace-nowrap">
                         {formatCurrency(pos.currentPrice, currency)}
                       </span>
                     ) : (
                       <span
-                        className="text-[11px] text-crypto-warning bg-crypto-warning/10 px-1.5 py-0.5 rounded border border-crypto-warning/20"
+                        className="text-[11px] text-crypto-warning bg-crypto-warning/10 px-1.5 py-0.5 rounded border border-crypto-warning/20 whitespace-nowrap"
                         title="Cotización temporalmente no disponible desde CoinGecko"
                       >
                         No disponible
@@ -147,16 +147,16 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                   </td>
 
                   {/* Valor Total a Mercado */}
-                  <td className="py-3.5 px-4 text-right font-mono font-bold text-crypto-text">
+                  <td className="py-3.5 px-4 text-right font-mono font-bold text-crypto-text whitespace-nowrap">
                     {pos.currentValue !== null ? formatCurrency(pos.currentValue, currency) : "—"}
                   </td>
 
                   {/* P&L No Realizado */}
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-right whitespace-nowrap">
                     {pos.unrealizedPnl !== null && pos.unrealizedPnlPercentage !== null ? (
                       <div className="flex flex-col items-end">
                         <span
-                          className={`font-mono font-semibold ${
+                          className={`font-mono font-semibold whitespace-nowrap ${
                             pos.unrealizedPnl >= 0 ? "text-crypto-positive" : "text-crypto-negative"
                           }`}
                         >
@@ -171,10 +171,10 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                   </td>
 
                   {/* P&L Realizado */}
-                  <td className="py-3.5 px-4 text-right font-mono">
+                  <td className="py-3.5 px-4 text-right font-mono whitespace-nowrap">
                     {pos.realizedPnl !== 0 ? (
                       <span
-                        className={`font-semibold ${
+                        className={`font-semibold whitespace-nowrap ${
                           pos.realizedPnl > 0 ? "text-crypto-positive" : "text-crypto-negative"
                         }`}
                       >
@@ -182,24 +182,24 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                         {formatCurrency(pos.realizedPnl, currency)}
                       </span>
                     ) : (
-                      <span className="text-crypto-text-muted">{formatCurrency(0, currency)}</span>
+                      <span className="text-crypto-text-muted whitespace-nowrap">{formatCurrency(0, currency)}</span>
                     )}
                   </td>
 
                   {/* Ponderación de la cartera */}
-                  <td className="py-3.5 px-4 text-right font-mono text-crypto-accent font-medium">
+                  <td className="py-3.5 px-4 text-right font-mono text-crypto-accent font-medium whitespace-nowrap">
                     {pos.allocationPercentage > 0
                       ? formatPercentage(pos.allocationPercentage, false)
                       : "0,00 %"}
                   </td>
 
                   {/* Botones de acción rápida */}
-                  <td className="py-3.5 px-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
+                  <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => onOpenTrade(pos.coinId, "buy")}
-                        className="px-2 py-1 rounded bg-crypto-primary/20 hover:bg-crypto-primary text-crypto-accent hover:text-white text-[11px] font-semibold transition-colors"
+                        className="px-2 py-1 rounded bg-crypto-primary/20 hover:bg-crypto-primary text-crypto-accent hover:text-white text-[11px] font-semibold transition-colors whitespace-nowrap"
                         title={`Comprar más ${pos.coinName || pos.coinId}`}
                       >
                         + Compra
@@ -208,7 +208,7 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenTrade(pos.coinId, "sell")}
-                          className="px-2 py-1 rounded bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-text-secondary hover:text-crypto-text text-[11px] font-semibold border border-crypto-border transition-colors"
+                          className="px-2 py-1 rounded bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-text-secondary hover:text-crypto-text text-[11px] font-semibold border border-crypto-border transition-colors whitespace-nowrap"
                           title={`Vender parte o todo de ${pos.coinName || pos.coinId}`}
                         >
                           - Venta

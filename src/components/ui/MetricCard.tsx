@@ -32,11 +32,12 @@ export const MetricCard: FC<MetricCardProps> = ({
       className={`bg-crypto-surface p-4 sm:p-5 rounded-xl border border-crypto-border transition-all duration-200 shadow-sm ${accentBorder} flex flex-col justify-between`}
       title={tooltip}
     >
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-xs font-medium text-crypto-text-secondary uppercase tracking-wider">
+      {/* Cabecera de la tarjeta con truncado seguro de etiqueta y protección de badges */}
+      <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+        <span className="text-xs font-medium text-crypto-text-secondary uppercase tracking-wider truncate min-w-0">
           {label}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {badge}
           {icon && (
             <span className="text-crypto-text-muted text-sm">{icon}</span>
@@ -44,8 +45,9 @@ export const MetricCard: FC<MetricCardProps> = ({
         </div>
       </div>
 
-      <div className="my-1">
-        <div className="text-xl sm:text-2xl font-mono font-bold text-crypto-text tracking-tight tabular-nums">
+      {/* Cifra financiera principal: preserva número, signo y unidad en una sola línea */}
+      <div className="my-1 overflow-hidden">
+        <div className="text-xl sm:text-2xl font-mono font-bold text-crypto-text tracking-tight tabular-nums whitespace-nowrap truncate">
           {value}
         </div>
       </div>

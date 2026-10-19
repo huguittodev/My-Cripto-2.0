@@ -363,11 +363,11 @@ const TransactionFormInner: FC<TransactionFormInnerProps> = ({
       </div>
 
       {/* Resumen del Total Estimado */}
-      <div className="p-3 bg-crypto-surface-raised/60 border border-crypto-border rounded-lg flex items-center justify-between text-xs">
+      <div className="p-3 bg-crypto-surface-raised/60 border border-crypto-border rounded-lg flex items-center justify-between text-xs gap-3">
         <span className="text-crypto-text-secondary font-mono">
           {type === "buy" ? "Total Desembolsado (con fee):" : "Total Recibido (neto de fee):"}
         </span>
-        <span className="font-mono font-bold text-sm text-crypto-text">
+        <span className="font-mono font-bold text-sm text-crypto-text whitespace-nowrap flex-shrink-0">
           {formatCurrency(netTotal, currency)}
         </span>
       </div>

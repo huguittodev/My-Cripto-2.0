@@ -14,8 +14,9 @@ export const AlertsSummaryRow: FC<AlertsSummaryRowProps> = ({
   triggeredCount,
   inactiveCount,
 }) => {
+  // Distribución responsive adaptada: 1 col móvil pequeño, 2 cols tablet/laptop, 4 cols desktop amplio
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {/* Total Alertas */}
       <MetricCard
         label="Total Alertas"

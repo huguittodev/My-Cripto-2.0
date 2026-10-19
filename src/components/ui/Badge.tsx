@@ -29,14 +29,15 @@ export const VariationBadge = ({
       ? "bg-crypto-negative-soft text-crypto-negative border border-crypto-negative/25"
       : "bg-crypto-surface-raised text-crypto-text-secondary border border-crypto-border";
 
+  // Garantiza que el badge de variación porcentual se mantenga como unidad indivisible
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md font-mono tabular-nums leading-none transition-colors ${sizeClasses} ${colorClasses}`}
+      className={`inline-flex items-center gap-1 rounded-md font-mono tabular-nums leading-none transition-colors whitespace-nowrap flex-shrink-0 select-none ${sizeClasses} ${colorClasses}`}
     >
-      <span className="text-[10px]">
+      <span className="text-[10px] flex-shrink-0">
         {isPositive ? "▲" : isNegative ? "▼" : "•"}
       </span>
-      <span>{formatPercentage(value)}</span>
+      <span className="whitespace-nowrap">{formatPercentage(value)}</span>
     </span>
   );
 };
@@ -61,17 +62,18 @@ export const StatusBadge = ({
     info: "bg-sky-500/10 text-crypto-info border border-crypto-info/20",
   }[variant];
 
+  // Insignia de estado compacta indivisible
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium leading-none ${variantClasses}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium leading-none whitespace-nowrap flex-shrink-0 select-none ${variantClasses}`}
     >
       {variant === "live" && (
-        <span className="relative flex h-1.5 w-1.5">
+        <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-crypto-positive opacity-75"></span>
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-crypto-positive"></span>
         </span>
       )}
-      {children}
+      <span className="whitespace-nowrap">{children}</span>
     </span>
   );
 };

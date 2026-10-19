@@ -75,18 +75,18 @@ export const Topbar: FC<TopbarProps> = ({
       {/* Right: API Controls & Data Feed Info */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* Base Currency Badge (Real: CoinGecko vs_currency) */}
-        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-crypto-surface-raised border border-crypto-border text-xs font-mono text-crypto-text-secondary">
+        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-crypto-surface-raised border border-crypto-border text-xs font-mono text-crypto-text-secondary whitespace-nowrap flex-shrink-0">
           <span className="text-crypto-text-muted">Moneda:</span>
           <span className="font-semibold text-crypto-text">{currency} ({currencyMeta.symbol})</span>
         </div>
 
         {/* Last updated indicator */}
         {lastUpdated && (
-          <div className="hidden lg:flex flex-col text-right">
-            <span className="text-[10px] text-crypto-text-muted uppercase font-mono tracking-wider">
+          <div className="hidden lg:flex flex-col text-right whitespace-nowrap flex-shrink-0">
+            <span className="text-[10px] text-crypto-text-muted uppercase font-mono tracking-wider whitespace-nowrap">
               Última sinc.
             </span>
-            <span className="text-xs font-mono text-crypto-text-secondary">
+            <span className="text-xs font-mono text-crypto-text-secondary whitespace-nowrap">
               {formatDateTime(lastUpdated)}
             </span>
           </div>

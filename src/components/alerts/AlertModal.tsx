@@ -369,27 +369,27 @@ const AlertFormInner: FC<AlertFormInnerProps> = ({
         {/* Accesos rápidos de variación porcentual */}
         {currentPrice !== null && currentPrice > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            <span className="text-[10px] text-crypto-text-muted">Atajos:</span>
+            <span className="text-[10px] text-crypto-text-muted whitespace-nowrap flex-shrink-0">Atajos:</span>
             {condition === "gte" ? (
               <>
                 <button
                   type="button"
                   onClick={() => handleApplyPercentage(5)}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-positive border border-crypto-border"
+                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-positive border border-crypto-border whitespace-nowrap flex-shrink-0"
                 >
                   +5%
                 </button>
                 <button
                   type="button"
                   onClick={() => handleApplyPercentage(10)}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-positive border border-crypto-border"
+                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-positive border border-crypto-border whitespace-nowrap flex-shrink-0"
                 >
                   +10%
                 </button>
                 <button
                   type="button"
                   onClick={() => handleApplyPercentage(20)}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-positive border border-crypto-border"
+                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-positive border border-crypto-border whitespace-nowrap flex-shrink-0"
                 >
                   +20%
                 </button>
@@ -399,21 +399,21 @@ const AlertFormInner: FC<AlertFormInnerProps> = ({
                 <button
                   type="button"
                   onClick={() => handleApplyPercentage(-5)}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-negative border border-crypto-border"
+                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-negative border border-crypto-border whitespace-nowrap flex-shrink-0"
                 >
                   -5%
                 </button>
                 <button
                   type="button"
                   onClick={() => handleApplyPercentage(-10)}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-negative border border-crypto-border"
+                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-negative border border-crypto-border whitespace-nowrap flex-shrink-0"
                 >
                   -10%
                 </button>
                 <button
                   type="button"
                   onClick={() => handleApplyPercentage(-20)}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-negative border border-crypto-border"
+                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-negative border border-crypto-border whitespace-nowrap flex-shrink-0"
                 >
                   -20%
                 </button>

@@ -114,11 +114,11 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
           </div>
 
           <div className="text-right">
-            <div className="text-2xl sm:text-3xl font-mono font-bold text-crypto-text tabular-nums">
+            <div className="text-2xl sm:text-3xl font-mono font-bold text-crypto-text tabular-nums whitespace-nowrap">
               {formatCurrency(activeCoin.current_price, currency)}
             </div>
             <div className="flex items-center justify-end gap-2 mt-1">
-              <span className="text-xs text-crypto-text-muted font-mono">24h:</span>
+              <span className="text-xs text-crypto-text-muted font-mono whitespace-nowrap">24h:</span>
               <VariationBadge value={activeCoin.price_change_percentage_24h} size="md" />
             </div>
           </div>
@@ -127,29 +127,29 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
         {/* Estadísticas Clave del Activo */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 my-2 border-b border-crypto-border/70 text-xs font-mono">
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
-            <span className="text-crypto-text-muted block text-[11px] mb-1">Cap. Mercado</span>
-            <span className="font-semibold text-crypto-text">
+            <span className="text-crypto-text-muted block text-[11px] mb-1 whitespace-nowrap">Cap. Mercado</span>
+            <span className="font-semibold text-crypto-text whitespace-nowrap">
               {formatCompactNumber(activeCoin.market_cap, currency)}
             </span>
           </div>
 
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
-            <span className="text-crypto-text-muted block text-[11px] mb-1">Volumen 24h</span>
-            <span className="font-semibold text-crypto-text">
+            <span className="text-crypto-text-muted block text-[11px] mb-1 whitespace-nowrap">Volumen 24h</span>
+            <span className="font-semibold text-crypto-text whitespace-nowrap">
               {activeCoin.total_volume ? formatCompactNumber(activeCoin.total_volume, currency) : "Disponible en F5"}
             </span>
           </div>
 
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
-            <span className="text-crypto-text-muted block text-[11px] mb-1">Máx. 24h</span>
-            <span className="font-semibold text-crypto-text">
+            <span className="text-crypto-text-muted block text-[11px] mb-1 whitespace-nowrap">Máx. 24h</span>
+            <span className="font-semibold text-crypto-text whitespace-nowrap">
               {activeCoin.high_24h ? formatCurrency(activeCoin.high_24h, currency) : "Disponible en F5"}
             </span>
           </div>
 
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
-            <span className="text-crypto-text-muted block text-[11px] mb-1">Mín. 24h</span>
-            <span className="font-semibold text-crypto-text">
+            <span className="text-crypto-text-muted block text-[11px] mb-1 whitespace-nowrap">Mín. 24h</span>
+            <span className="font-semibold text-crypto-text whitespace-nowrap">
               {activeCoin.low_24h ? formatCurrency(activeCoin.low_24h, currency) : "Disponible en F5"}
             </span>
           </div>
