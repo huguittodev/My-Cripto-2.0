@@ -10,10 +10,20 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-/**
- * Lee y parsea el cuerpo de una solicitud HTTP en streaming de Node.js.
- */
+// Lee y parsea el cuerpo de una solicitud HTTP en Node.js o Vercel Serverless
 function readJsonBody(req) {
+  // Si el entorno serverless ya parseó el JSON del cuerpo
+  if (req.body && typeof req.body === 'object') {
+    return Promise.resolve(req.body);
+  }
+  if (typeof req.body === 'string' && req.body.trim()) {
+    try {
+      return Promise.resolve(JSON.parse(req.body));
+    } catch (err) {
+      return Promise.reject(new Error(`JSON no válido: ${err.message}`));
+    }
+  }
+
   return new Promise((resolve, reject) => {
     let raw = '';
     req.on('data', (chunk) => {
