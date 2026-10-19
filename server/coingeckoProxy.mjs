@@ -32,20 +32,29 @@ export async function handleCoinGeckoProxy(req, res) {
     const rawUrl = req.url || '';
     const parsedUrl = new URL(rawUrl, 'http://localhost');
 
-    // Extrae la ruta eliminando el prefijo del proxy
-    let targetPath = parsedUrl.pathname.replace(/^\/api\/coingecko/, '');
+    // Extrae la ruta de destino priorizando el parámetro 'path' inyectado por Vercel rewrite
+    const allPaths = parsedUrl.searchParams.getAll('path');
+    let pathFromQuery = null;
 
-    // Soporte para parámetros de ruta de Vercel [...path]
-    if ((!targetPath || targetPath === '/') && req.query && req.query.path) {
-      const subpath = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
-      targetPath = `/${subpath}`;
+    if (allPaths.length > 0) {
+      pathFromQuery = allPaths.join('/');
+    } else if (req.query && req.query.path) {
+      pathFromQuery = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
     }
 
-    if (!targetPath.startsWith('/')) {
-      targetPath = `/${targetPath}`;
+    let targetPath = '';
+    if (pathFromQuery) {
+      const cleanPath = String(pathFromQuery).trim();
+      targetPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+    } else {
+      // Si se invoca directamente sin rewrite
+      targetPath = parsedUrl.pathname.replace(/^\/api\/coingecko/, '');
+      if (!targetPath.startsWith('/')) {
+        targetPath = `/${targetPath}`;
+      }
     }
 
-    // Filtra el parámetro interno 'path' inyectado por Vercel para no ensuciar la consulta a CoinGecko
+    // Filtra el parámetro interno 'path' para que no viaje a la API de CoinGecko
     const searchParams = new URLSearchParams(parsedUrl.search);
     searchParams.delete('path');
     const queryString = searchParams.toString();

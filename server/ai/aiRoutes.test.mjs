@@ -110,7 +110,7 @@ describe('AI Routes & Vercel Functions Compatibility', () => {
       expect(res.statusCode).toBe(400);
       const parsed = JSON.parse(res.body);
       expect(parsed.ok).toBe(false);
-      expect(parsed.error).toBe('BAD_REQUEST');
+      expect(parsed.error).toBe('INVALID_PROMPT');
     });
   });
 });
