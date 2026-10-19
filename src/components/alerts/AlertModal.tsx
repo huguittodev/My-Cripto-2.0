@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { FC, FormEvent } from "react";
 import type { PriceAlert, AlertCondition, Cryptocurrency, SearchCoinResult } from "../../types/crypto";
 import { validateAlertInput } from "../../utils/alertEngine.ts";
-import { formatCurrency } from "../../utils/formatters.ts";
+import { formatCurrency, getCurrencySymbol } from "../../utils/formatters.ts";
 import { searchCoins } from "../../services/api.ts";
 
 interface AlertModalProps {
@@ -14,6 +14,7 @@ interface AlertModalProps {
   initialCoin?: Cryptocurrency | null;
   existingAlerts?: PriceAlert[];
   currentPrices?: Record<string, number | null>;
+  currency?: string;
 }
 
 // Activos habituales con metadatos para sugerencias inmediatas
@@ -34,6 +35,7 @@ interface AlertFormInnerProps {
   initialCoin?: Cryptocurrency | null;
   existingAlerts: PriceAlert[];
   currentPrices: Record<string, number | null>;
+  currency?: string;
 }
 
 const AlertFormInner: FC<AlertFormInnerProps> = ({
@@ -44,6 +46,7 @@ const AlertFormInner: FC<AlertFormInnerProps> = ({
   initialCoin,
   existingAlerts,
   currentPrices,
+  currency = "EUR",
 }) => {
   // Inicialización de estado del formulario
   const [coinId, setCoinId] = useState<string>(
@@ -184,7 +187,7 @@ const AlertFormInner: FC<AlertFormInnerProps> = ({
         coinImage,
         condition,
         targetPrice: parsedPrice,
-        currency: "eur",
+        currency: (editingAlert?.currency || currency || "eur").toLowerCase(),
         notes: notes.trim() || undefined,
       });
     }
@@ -342,11 +345,11 @@ const AlertFormInner: FC<AlertFormInnerProps> = ({
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label htmlFor="target-price-input" className="text-xs font-semibold text-crypto-text-secondary">
-            Precio Objetivo (€)
+            Precio Objetivo ({getCurrencySymbol(currency)})
           </label>
           {currentPrice !== null && (
             <span className="text-[10px] font-mono text-crypto-text-muted">
-              Base: {formatCurrency(currentPrice)}
+              Base: {formatCurrency(currentPrice, currency)}
             </span>
           )}
         </div>
@@ -464,6 +467,7 @@ export const AlertModal: FC<AlertModalProps> = ({
   initialCoin,
   existingAlerts = [],
   currentPrices = {},
+  currency = "EUR",
 }) => {
   if (!isOpen) return null;
 
@@ -515,6 +519,7 @@ export const AlertModal: FC<AlertModalProps> = ({
           initialCoin={initialCoin}
           existingAlerts={existingAlerts}
           currentPrices={currentPrices}
+          currency={currency}
         />
       </div>
     </div>

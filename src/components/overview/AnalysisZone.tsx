@@ -14,6 +14,7 @@ interface AnalysisZoneProps {
   coins: CryptoList;
   onSelectCoin: (coin: Cryptocurrency) => void;
   onConfigureAlert?: (coin: Cryptocurrency) => void;
+  currency?: string;
 }
 
 export const AnalysisZone: FC<AnalysisZoneProps> = ({
@@ -21,11 +22,12 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
   coins,
   onSelectCoin,
   onConfigureAlert,
+  currency = "EUR",
 }) => {
   const activeCoin = selectedCoin || coins[0] || null;
   const { isFavorite, toggleFavorite } = useWatchlist();
 
-  // Hook para cargar y gestionar la serie histórica del activo seleccionado
+  // Hook para cargar y gestionar la serie histórica del activo seleccionado en la divisa configurada
   const {
     days,
     setDays,
@@ -37,7 +39,7 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
     hoveredPoint,
     setHoveredPoint,
     refetch: refetchChart,
-  } = useHistoricalChart(activeCoin?.id);
+  } = useHistoricalChart(activeCoin?.id, currency.toLowerCase());
 
   if (!activeCoin) {
     return null;
@@ -113,7 +115,7 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
 
           <div className="text-right">
             <div className="text-2xl sm:text-3xl font-mono font-bold text-crypto-text tabular-nums">
-              {formatCurrency(activeCoin.current_price)}
+              {formatCurrency(activeCoin.current_price, currency)}
             </div>
             <div className="flex items-center justify-end gap-2 mt-1">
               <span className="text-xs text-crypto-text-muted font-mono">24h:</span>
@@ -127,28 +129,28 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
             <span className="text-crypto-text-muted block text-[11px] mb-1">Cap. Mercado</span>
             <span className="font-semibold text-crypto-text">
-              {formatCompactNumber(activeCoin.market_cap)}
+              {formatCompactNumber(activeCoin.market_cap, currency)}
             </span>
           </div>
 
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
             <span className="text-crypto-text-muted block text-[11px] mb-1">Volumen 24h</span>
             <span className="font-semibold text-crypto-text">
-              {activeCoin.total_volume ? formatCompactNumber(activeCoin.total_volume) : "Disponible en F5"}
+              {activeCoin.total_volume ? formatCompactNumber(activeCoin.total_volume, currency) : "Disponible en F5"}
             </span>
           </div>
 
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
             <span className="text-crypto-text-muted block text-[11px] mb-1">Máx. 24h</span>
             <span className="font-semibold text-crypto-text">
-              {activeCoin.high_24h ? formatCurrency(activeCoin.high_24h) : "Disponible en F5"}
+              {activeCoin.high_24h ? formatCurrency(activeCoin.high_24h, currency) : "Disponible en F5"}
             </span>
           </div>
 
           <div className="bg-crypto-surface-hover/70 p-2.5 rounded-lg border border-crypto-border/60">
             <span className="text-crypto-text-muted block text-[11px] mb-1">Mín. 24h</span>
             <span className="font-semibold text-crypto-text">
-              {activeCoin.low_24h ? formatCurrency(activeCoin.low_24h) : "Disponible en F5"}
+              {activeCoin.low_24h ? formatCurrency(activeCoin.low_24h, currency) : "Disponible en F5"}
             </span>
           </div>
         </div>
@@ -172,6 +174,7 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
             performance={chartData?.performance || null}
             hoveredPoint={hoveredPoint}
             isLoading={chartLoading}
+            currency={currency}
           />
 
           {/* Canvas SVG interactivo del gráfico con soporte de cursor */}
@@ -184,6 +187,7 @@ export const AnalysisZone: FC<AnalysisZoneProps> = ({
             onRetry={refetchChart}
             hoveredPoint={hoveredPoint}
             onHoverPoint={setHoveredPoint}
+            currency={currency}
           />
         </div>
       </div>

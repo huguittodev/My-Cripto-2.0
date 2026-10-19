@@ -7,11 +7,13 @@ import { formatCurrency, formatPercentage } from "../../utils/formatters.ts";
 interface PortfolioSummaryRowProps {
   summary: PortfolioSummary;
   isLoadingPrices: boolean;
+  currency?: string;
 }
 
 export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
   summary,
   isLoadingPrices,
+  currency = "EUR",
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -21,7 +23,7 @@ export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
         value={
           isLoadingPrices && summary.positionCount > 0
             ? "Actualizando..."
-            : formatCurrency(summary.totalCurrentValue)
+            : formatCurrency(summary.totalCurrentValue, currency)
         }
         subValue={
           <span className="text-[11px] text-crypto-text-muted">
@@ -30,14 +32,14 @@ export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
               : `${summary.positionCount} activo${summary.positionCount === 1 ? "" : "s"} en posesión`}
           </span>
         }
-        tooltip="Valoración total a precio de mercado actual en euros (EUR)"
+        tooltip={`Valoración total a precio de mercado actual en ${currency}`}
         accentColor="primary"
       />
 
       {/* 2. Coste Total de Adquisición */}
       <MetricCard
         label="Coste de Adquisición"
-        value={formatCurrency(summary.totalCostBasis)}
+        value={formatCurrency(summary.totalCostBasis, currency)}
         subValue={
           <span className="text-[11px] text-crypto-text-muted">
             Base según método FIFO (incluye comisiones de compra)
@@ -53,7 +55,7 @@ export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
         value={
           isLoadingPrices && summary.positionCount > 0
             ? "..."
-            : `${summary.totalUnrealizedPnl >= 0 ? "+" : ""}${formatCurrency(summary.totalUnrealizedPnl)}`
+            : `${summary.totalUnrealizedPnl >= 0 ? "+" : ""}${formatCurrency(summary.totalUnrealizedPnl, currency)}`
         }
         badge={
           !isLoadingPrices && summary.positionCount > 0 ? (
@@ -74,7 +76,7 @@ export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
       {/* 4. Beneficio / Pérdida Realizado (Cerrado) */}
       <MetricCard
         label="P&L Realizado"
-        value={`${summary.totalRealizedPnl >= 0 ? "+" : ""}${formatCurrency(summary.totalRealizedPnl)}`}
+        value={`${summary.totalRealizedPnl >= 0 ? "+" : ""}${formatCurrency(summary.totalRealizedPnl, currency)}`}
         badge={
           summary.totalRealizedPnl !== 0 ? (
             <span
@@ -100,7 +102,7 @@ export const PortfolioSummaryRow: FC<PortfolioSummaryRowProps> = ({
       {/* 5. Comisiones Totales Contabilizadas */}
       <MetricCard
         label="Comisiones Pagadas"
-        value={formatCurrency(summary.totalFees)}
+        value={formatCurrency(summary.totalFees, currency)}
         subValue={
           <span className="text-[11px] text-crypto-text-muted">
             {summary.transactionCount} operaci{summary.transactionCount === 1 ? "ón" : "ones"} registradas

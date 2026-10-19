@@ -40,11 +40,16 @@ export interface UsePortfolioReturn {
   currentPrices: Record<string, number | null>;
 }
 
+export interface UsePortfolioOptions {
+  vsCurrency?: string;
+}
+
 /**
  * Hook orquestador de la cartera cripto: gestiona el estado de transacciones,
  * sincronización de almacenamiento, cotizaciones en tiempo real y cálculos FIFO.
  */
-export const usePortfolio = (): UsePortfolioReturn => {
+export const usePortfolio = (options: UsePortfolioOptions = {}): UsePortfolioReturn => {
+  const { vsCurrency = "eur" } = options;
   const [transactions, setTransactions] = useState<Transaction[]>(() => getStoredTransactions());
   const [currentPrices, setCurrentPrices] = useState<Record<string, number | null>>({});
   const [coinMetadata, setCoinMetadata] = useState<
@@ -103,7 +108,7 @@ export const usePortfolio = (): UsePortfolioReturn => {
 
     try {
       const data = await getMarkets({
-        vsCurrency: "eur",
+        vsCurrency: vsCurrency.toLowerCase(),
         ids: uniqueCoinIds,
         perPage: Math.max(uniqueCoinIds.length, 50),
         sparkline: false,
@@ -139,7 +144,7 @@ export const usePortfolio = (): UsePortfolioReturn => {
     } finally {
       setIsLoadingPrices(false);
     }
-  }, [uniqueCoinIds]);
+  }, [uniqueCoinIds, vsCurrency]);
 
   // Dispara la consulta de precios al cambiar los activos únicos operados
   useEffect(() => {

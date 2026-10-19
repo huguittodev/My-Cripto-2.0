@@ -3,32 +3,79 @@
 @tailwind utilities;
 
 @layer base {
-  html {
+  :root {
     color-scheme: dark;
+    /* Paleta SaaS Azul en modo oscuro (valores RGB por componentes para admitir opacidades dinámicas) */
+    --crypto-bg: 11, 16, 32;
+    --crypto-surface: 17, 26, 46;
+    --crypto-surface-hover: 24, 36, 59;
+    --crypto-surface-raised: 28, 41, 66;
+    --crypto-border: 41, 55, 80;
+    --crypto-border-hover: 59, 78, 112;
+    --crypto-primary: 59, 130, 246;
+    --crypto-primary-hover: 37, 99, 235;
+    --crypto-primary-soft: 23, 45, 80;
+    --crypto-accent: 96, 165, 250;
+    --crypto-accent-strong: 147, 197, 253;
+    --crypto-text: 241, 245, 249;
+    --crypto-text-secondary: 167, 180, 200;
+    --crypto-text-muted: 119, 134, 159;
+    --crypto-positive: 34, 197, 94;
+    --crypto-positive-soft: rgba(34, 197, 94, 0.15);
+    --crypto-negative: 248, 113, 113;
+    --crypto-negative-soft: rgba(248, 113, 113, 0.15);
+    --crypto-warning: 251, 191, 36;
+    --crypto-info: 56, 189, 248;
+  }
+
+  html.light {
+    color-scheme: light;
+    /* Paleta SaaS Azul en modo claro con máximo contraste y fidelidad visual */
+    --crypto-bg: 240, 244, 248;
+    --crypto-surface: 255, 255, 255;
+    --crypto-surface-hover: 241, 245, 249;
+    --crypto-surface-raised: 226, 232, 240;
+    --crypto-border: 203, 213, 225;
+    --crypto-border-hover: 148, 163, 184;
+    --crypto-primary: 37, 99, 235;
+    --crypto-primary-hover: 29, 78, 216;
+    --crypto-primary-soft: 239, 246, 255;
+    --crypto-accent: 37, 99, 235;
+    --crypto-accent-strong: 29, 78, 216;
+    --crypto-text: 11, 16, 32;
+    --crypto-text-secondary: 51, 65, 85;
+    --crypto-text-muted: 100, 116, 139;
+    --crypto-positive: 22, 163, 74;
+    --crypto-positive-soft: rgba(22, 163, 74, 0.12);
+    --crypto-negative: 220, 38, 38;
+    --crypto-negative-soft: rgba(220, 38, 38, 0.12);
+    --crypto-warning: 217, 119, 6;
+    --crypto-info: 2, 132, 199;
   }
 
   body {
     @apply bg-crypto-bg text-crypto-text;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 
-/* Scrollbar sutil para terminal financiera SaaS azul */
+/* Scrollbar sutil adaptativo */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B1020;
+  background: rgba(var(--crypto-bg), 1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #293750;
+  background: rgba(var(--crypto-border), 1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3B4E70;
+  background: rgba(var(--crypto-border-hover), 1);
 }

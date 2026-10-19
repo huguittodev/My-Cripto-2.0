@@ -1,61 +1,73 @@
 /** @type {import('tailwindcss').Config} */
+
+// Función auxiliar para admitir opacidades dinámicas en Tailwind usando CSS variables en RGB
+function withOpacity(variableName) {
+  return ({ opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgba(var(${variableName}), ${opacityValue})`;
+    }
+    return `rgb(var(${variableName}))`;
+  };
+}
+
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
         crypto: {
           // Fondos y superficies SaaS azul
-          bg: "#0B1020",
+          bg: withOpacity("--crypto-bg"),
           surface: {
-            DEFAULT: "#111A2E",
-            hover: "#18243B",
-            raised: "#1C2942",
+            DEFAULT: withOpacity("--crypto-surface"),
+            hover: withOpacity("--crypto-surface-hover"),
+            raised: withOpacity("--crypto-surface-raised"),
           },
-          "surface-hover": "#18243B",
-          "surface-raised": "#1C2942",
+          "surface-hover": withOpacity("--crypto-surface-hover"),
+          "surface-raised": withOpacity("--crypto-surface-raised"),
           border: {
-            DEFAULT: "#293750",
-            hover: "#3B4E70",
+            DEFAULT: withOpacity("--crypto-border"),
+            hover: withOpacity("--crypto-border-hover"),
           },
-          "border-hover": "#3B4E70",
+          "border-hover": withOpacity("--crypto-border-hover"),
 
           // Marca azul
           primary: {
-            DEFAULT: "#3B82F6",
-            hover: "#2563EB",
-            soft: "#172D50",
+            DEFAULT: withOpacity("--crypto-primary"),
+            hover: withOpacity("--crypto-primary-hover"),
+            soft: withOpacity("--crypto-primary-soft"),
           },
-          "primary-hover": "#2563EB",
-          "primary-soft": "#172D50",
+          "primary-hover": withOpacity("--crypto-primary-hover"),
+          "primary-soft": withOpacity("--crypto-primary-soft"),
           accent: {
-            DEFAULT: "#60A5FA",
-            strong: "#93C5FD",
+            DEFAULT: withOpacity("--crypto-accent"),
+            strong: withOpacity("--crypto-accent-strong"),
           },
-          "accent-strong": "#93C5FD",
+          "accent-strong": withOpacity("--crypto-accent-strong"),
 
           // Jerarquía de texto
           text: {
-            DEFAULT: "#F1F5F9",
-            secondary: "#A7B4C8",
-            muted: "#77869F",
+            DEFAULT: withOpacity("--crypto-text"),
+            secondary: withOpacity("--crypto-text-secondary"),
+            muted: withOpacity("--crypto-text-muted"),
           },
-          "text-secondary": "#A7B4C8",
-          "text-muted": "#77869F",
+          "text-secondary": withOpacity("--crypto-text-secondary"),
+          "text-muted": withOpacity("--crypto-text-muted"),
 
           // Estados financieros y feedback
           positive: {
-            DEFAULT: "#22C55E",
-            soft: "rgba(34, 197, 94, 0.15)",
+            DEFAULT: withOpacity("--crypto-positive"),
+            soft: "var(--crypto-positive-soft)",
           },
-          "positive-soft": "rgba(34, 197, 94, 0.15)",
+          "positive-soft": "var(--crypto-positive-soft)",
           negative: {
-            DEFAULT: "#F87171",
-            soft: "rgba(248, 113, 113, 0.15)",
+            DEFAULT: withOpacity("--crypto-negative"),
+            soft: "var(--crypto-negative-soft)",
           },
-          "negative-soft": "rgba(248, 113, 113, 0.15)",
-          warning: "#FBBF24",
-          info: "#38BDF8",
+          "negative-soft": "var(--crypto-negative-soft)",
+          warning: withOpacity("--crypto-warning"),
+          info: withOpacity("--crypto-info"),
         },
       },
       fontFamily: {

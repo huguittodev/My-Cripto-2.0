@@ -8,12 +8,14 @@ interface MarketMetricsRowProps {
   coins: CryptoList;
   globalData: GlobalMarketData | null;
   isLoading: boolean;
+  currency?: string;
 }
 
 export const MarketMetricsRow: FC<MarketMetricsRowProps> = ({
   coins,
   globalData,
   isLoading,
+  currency = "EUR",
 }) => {
   if (coins.length === 0 && !globalData && !isLoading) {
     return null;
@@ -40,13 +42,13 @@ export const MarketMetricsRow: FC<MarketMetricsRowProps> = ({
           isLoading
             ? "Cargando..."
             : globalData
-              ? formatCompactNumber(globalData.total_market_cap_eur)
-              : formatCompactNumber(totalMarketCapSample)
+              ? formatCompactNumber(globalData.total_market_cap_eur, currency)
+              : formatCompactNumber(totalMarketCapSample, currency)
         }
         subValue={
           <span className="text-[11px] text-crypto-text-muted">
             {globalData
-              ? "Valor global del mercado en EUR"
+              ? `Valor global del mercado en ${currency}`
               : `Muestra de los ${coins.length} activos cargados`}
           </span>
         }
@@ -61,7 +63,7 @@ export const MarketMetricsRow: FC<MarketMetricsRowProps> = ({
           isLoading
             ? "Cargando..."
             : globalData
-              ? formatCompactNumber(globalData.total_volume_eur)
+              ? formatCompactNumber(globalData.total_volume_eur, currency)
               : "—"
         }
         subValue={
@@ -88,7 +90,7 @@ export const MarketMetricsRow: FC<MarketMetricsRowProps> = ({
         badge={
           leaderCoin && !isLoading ? (
             <span className="text-[11px] font-mono text-crypto-text-muted">
-              BTC: {formatCurrency(leaderCoin.current_price)}
+              BTC: {formatCurrency(leaderCoin.current_price, currency)}
             </span>
           ) : undefined
         }

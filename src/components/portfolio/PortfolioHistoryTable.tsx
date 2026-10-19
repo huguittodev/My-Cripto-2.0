@@ -7,12 +7,14 @@ interface PortfolioHistoryTableProps {
   transactions: Transaction[];
   onEdit: (tx: Transaction) => void;
   onDelete: (id: string) => void;
+  currency?: string;
 }
 
 export const PortfolioHistoryTable: FC<PortfolioHistoryTableProps> = ({
   transactions,
   onEdit,
   onDelete,
+  currency = "EUR",
 }) => {
   const [filterCoin, setFilterCoin] = useState<string>("all");
   const [filterType, setFilterType] = useState<"all" | "buy" | "sell">("all");
@@ -146,17 +148,17 @@ export const PortfolioHistoryTable: FC<PortfolioHistoryTableProps> = ({
 
                   {/* Precio Unitario */}
                   <td className="py-3 px-4 text-right font-mono text-crypto-text-secondary">
-                    {formatCurrency(tx.pricePerUnit)}
+                    {formatCurrency(tx.pricePerUnit, currency)}
                   </td>
 
                   {/* Comisión */}
                   <td className="py-3 px-4 text-right font-mono text-crypto-text-muted">
-                    {tx.fee > 0 ? formatCurrency(tx.fee) : "0,00 €"}
+                    {tx.fee > 0 ? formatCurrency(tx.fee, currency) : formatCurrency(0, currency)}
                   </td>
 
                   {/* Total Transacción */}
                   <td className="py-3 px-4 text-right font-mono font-bold text-crypto-text">
-                    {formatCurrency(effectiveTotal)}
+                    {formatCurrency(effectiveTotal, currency)}
                   </td>
 
                   {/* Notas */}

@@ -36,6 +36,23 @@ Desarrollada con **React 19**, **TypeScript**, **Vite** y **Tailwind CSS**, inte
 - **Asignación y distribución:** Visualización de la cuota porcentual de cada activo en la cartera.
 - **No custodial y privada:** Sin claves privadas, frases semilla ni conexión a exchanges. Todos los datos permanecen en el navegador.
 
+### 6. Alertas de Precio y Notificaciones Duales
+- **Monitorización continua:** Umbrales técnicos (≥ y ≤) con sondeo periódico agrupado.
+- **Sistema dual:** Notificaciones visuales flotantes (toasts) y de escritorio (Web Notification API).
+- **Persistencia local:** Almacenamiento seguro bajo `my-crypto-alerts-v1`.
+
+### 7. AI Crypto Analyst (Gemini API)
+- **Arquitectura backend segura:** Proxy en Node.js que mantiene la clave `GEMINI_API_KEY` en el servidor sin exponerla en el bundle cliente.
+- **Análisis contextual y riguroso:** Distinción epistémica estricta entre datos reales de mercado e interpretaciones descriptivas generadas por IA.
+- **Consultas asistidas:** Sugerencias interactivas y comparativas multiactivo.
+
+### 8. Ajustes del Sistema (System Settings)
+- **Divisa base configurable:** Alterna instantáneamente entre EUR (€), USD ($) y GBP (£) con consultas nativas `vs_currency` a CoinGecko y formateador `Intl.NumberFormat` dinámico con soporte de micro-caps.
+- **Temas visuales sin recarga:** Modos Oscuro (Dark SaaS Azul), Claro (Light de alta legibilidad) y Automático (sincronizado con el sistema operativo vía `prefers-color-scheme`).
+- **Intervalo de refresco regulable:** Frecuencias automáticas (Manual, 30s, 60s, 120s, 300s) para respetar la cuota del proveedor público.
+- **Diagnóstico y conectividad:** Prueba de latencia en vivo con CoinGecko y purga de caché en memoria.
+- **Gestión transparente de privacidad:** Desglose de bytes ocupados y borrado seguro que preserva la cartera y la watchlist.
+
 ---
 
 ## 🛠️ Stack Tecnológico
@@ -89,21 +106,25 @@ Desarrollada con **React 19**, **TypeScript**, **Vite** y **Tailwind CSS**, inte
 ```text
 src/
  ├── components/
+ │    ├── ai/            # Analista de IA: vista interactiva, chat y sugerencias
+ │    ├── alerts/        # Sistema de alertas: modal, tarjetas y toasts
  │    ├── charts/        # Gráficos interactivos y selectores de periodo
  │    ├── common/        # Botón de favoritos, spinners y mensajes de error
- │    ├── layout/        # AppLayout, Header y Sidebar colapsable
+ │    ├── layout/        # AppLayout, Topbar con moneda dinámica y Sidebar
  │    ├── markets/       # Tabla del explorador, filtros, paginación y sparklines
  │    ├── overview/      # MarketMetricsRow y zona de análisis
  │    ├── portfolio/     # Motor de cartera: resumen, posiciones, transacciones y formulario
+ │    ├── settings/      # Ajustes del sistema: 6 secciones, diagnóstico y peligro
  │    ├── ui/            # Badges, MetricCards y elementos visuales base
  │    └── watchlist/     # Vista de activos favoritos y estado vacío
- ├── hooks/              # Custom hooks: useMarketExplorer, useHistoricalChart, useWatchlist, usePortfolio
- ├── services/           # Capa de red y persistencia: api.ts, watchlistStorage.ts, portfolioStorage.ts
- ├── types/              # Contratos de tipos de dominio (crypto.d.ts)
- ├── utils/              # Funciones puras: calculations.ts, formatters.ts, marketFilters.ts, portfolioCalculations.ts
- ├── App.tsx             # Orquestador principal y enrutado de navegación
+ ├── context/            # Proveedor de estado global: SettingsContext.tsx
+ ├── hooks/              # Custom hooks: useMarketExplorer, usePortfolio, useAlerts, useAiAnalyst...
+ ├── services/           # Adaptadores de red y persistencia: api.ts, settingsStorage.ts...
+ ├── types/              # Contratos de tipos de dominio (crypto.d.ts, settings.ts)
+ ├── utils/              # Funciones puras: formatters.ts, alertEngine.ts, portfolioCalculations.ts...
+ ├── App.tsx             # Orquestador principal envuelto en SettingsProvider
  ├── main.tsx            # Punto de entrada de la aplicación React
- └── index.css           # Directivas globales de Tailwind CSS
+ └── index.css           # Tokens de diseño y variables CSS para modos Dark/Light
 ```
 
 ---

@@ -8,12 +8,14 @@ interface PortfolioPositionsTableProps {
   positions: PortfolioPosition[];
   onOpenTrade: (coinId: string, initialType?: "buy" | "sell") => void;
   isLoadingPrices: boolean;
+  currency?: string;
 }
 
 export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
   positions,
   onOpenTrade,
   isLoadingPrices,
+  currency = "EUR",
 }) => {
   const [showClosedPositions, setShowClosedPositions] = useState(false);
 
@@ -123,7 +125,7 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
 
                   {/* Coste medio de compra FIFO */}
                   <td className="py-3.5 px-4 text-right font-mono text-crypto-text-secondary">
-                    {pos.amount > 0 ? formatCurrency(pos.averageBuyPrice) : "—"}
+                    {pos.amount > 0 ? formatCurrency(pos.averageBuyPrice, currency) : "—"}
                   </td>
 
                   {/* Precio de mercado actual */}
@@ -132,7 +134,7 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                       <span className="text-crypto-text-muted">...</span>
                     ) : pos.currentPrice !== null ? (
                       <span className="text-crypto-text font-medium">
-                        {formatCurrency(pos.currentPrice)}
+                        {formatCurrency(pos.currentPrice, currency)}
                       </span>
                     ) : (
                       <span
@@ -146,7 +148,7 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
 
                   {/* Valor Total a Mercado */}
                   <td className="py-3.5 px-4 text-right font-mono font-bold text-crypto-text">
-                    {pos.currentValue !== null ? formatCurrency(pos.currentValue) : "—"}
+                    {pos.currentValue !== null ? formatCurrency(pos.currentValue, currency) : "—"}
                   </td>
 
                   {/* P&L No Realizado */}
@@ -159,7 +161,7 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                           }`}
                         >
                           {pos.unrealizedPnl >= 0 ? "+" : ""}
-                          {formatCurrency(pos.unrealizedPnl)}
+                          {formatCurrency(pos.unrealizedPnl, currency)}
                         </span>
                         <VariationBadge value={pos.unrealizedPnlPercentage} size="sm" />
                       </div>
@@ -177,10 +179,10 @@ export const PortfolioPositionsTable: FC<PortfolioPositionsTableProps> = ({
                         }`}
                       >
                         {pos.realizedPnl > 0 ? "+" : ""}
-                        {formatCurrency(pos.realizedPnl)}
+                        {formatCurrency(pos.realizedPnl, currency)}
                       </span>
                     ) : (
-                      <span className="text-crypto-text-muted">0,00 €</span>
+                      <span className="text-crypto-text-muted">{formatCurrency(0, currency)}</span>
                     )}
                   </td>
 

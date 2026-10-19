@@ -8,6 +8,7 @@ interface AssetPerformanceHeaderProps {
   performance: PeriodPerformance | null;
   hoveredPoint: ChartPoint | null;
   isLoading: boolean;
+  currency?: string;
 }
 
 const TIMEFRAME_LABELS: Record<TimeRangeDays, string> = {
@@ -23,6 +24,7 @@ export const AssetPerformanceHeader: FC<AssetPerformanceHeaderProps> = ({
   performance,
   hoveredPoint,
   isLoading,
+  currency = "EUR",
 }) => {
   if (isLoading || !performance || !performance.isValid) {
     return (
@@ -55,7 +57,7 @@ export const AssetPerformanceHeader: FC<AssetPerformanceHeaderProps> = ({
             {hoveredPoint ? "Precio en punto inspeccionado" : "Precio de cierre del periodo"}
           </span>
           <span className="text-lg sm:text-xl font-bold text-crypto-text tabular-nums">
-            {formatCurrency(displayPrice)}
+            {formatCurrency(displayPrice, currency)}
           </span>
         </div>
 
@@ -83,7 +85,7 @@ export const AssetPerformanceHeader: FC<AssetPerformanceHeaderProps> = ({
             }`}
           >
             {pointDeltaAbsolute >= 0 ? "+" : ""}
-            {formatCurrency(pointDeltaAbsolute)}
+            {formatCurrency(pointDeltaAbsolute, currency)}
           </span>
         </div>
 

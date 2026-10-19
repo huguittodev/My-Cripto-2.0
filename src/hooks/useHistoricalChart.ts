@@ -22,7 +22,10 @@ export interface UseHistoricalChartResult {
  * frente a cancelaciones, deduplicando peticiones y reteniendo datos antiguos (stale)
  * en caso de que una actualización falle por rate limit o red.
  */
-export function useHistoricalChart(coinId: string | undefined): UseHistoricalChartResult {
+export function useHistoricalChart(
+  coinId: string | undefined,
+  vsCurrency = "eur",
+): UseHistoricalChartResult {
   const [days, setDays] = useState<TimeRangeDays>(1);
   const [data, setData] = useState<HistoricalPriceData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,6 +51,7 @@ export function useHistoricalChart(coinId: string | undefined): UseHistoricalCha
         const result = await getCoinMarketChart({
           coinId: targetCoinId,
           days: targetDays,
+          vsCurrency: vsCurrency.toLowerCase(),
           ignoreCache,
         });
 
@@ -71,7 +75,7 @@ export function useHistoricalChart(coinId: string | undefined): UseHistoricalCha
               setIsStale(true);
               return prev;
             }
-            const stale = getStaleChartData(targetCoinId, targetDays);
+            const stale = getStaleChartData(targetCoinId, targetDays, vsCurrency.toLowerCase());
             if (stale) {
               setIsStale(true);
               return stale;
@@ -85,15 +89,15 @@ export function useHistoricalChart(coinId: string | undefined): UseHistoricalCha
         }
       }
     },
-    [],
+    [vsCurrency],
   );
 
-  // Carga automática al cambiar de activo o de periodo
+  // Carga automática al cambiar de activo, de periodo o de divisa base
   useEffect(() => {
     if (coinId) {
       fetchChart(coinId, days);
     }
-  }, [coinId, days, fetchChart]);
+  }, [coinId, days, fetchChart, vsCurrency]);
 
   const handleSelectDays = useCallback((newDays: TimeRangeDays) => {
     setDays(newDays);

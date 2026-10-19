@@ -289,7 +289,6 @@ export const Sidebar: FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="flex-1 flex items-center justify-between">
               <span>Ajustes</span>
-              <StatusBadge variant="upcoming">Fase 10</StatusBadge>
             </div>
           )}
         </button>

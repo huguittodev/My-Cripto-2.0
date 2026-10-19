@@ -34,6 +34,10 @@ Registra aquí decisiones que afecten al producto y al código. No des por decid
 | 2026-10-19 | Inyección de datos de mercado verificados y distinción epistémica estricta | Evitar alucinaciones de precios, porcentajes y falsas noticias o atribuciones de causalidad | El modelo recibe cotizaciones EUR reales de CoinGecko y etiqueta hechos vs interpretaciones |
 | 2026-10-19 | Envío de cartera opcional bajo consentimiento explícito y anónimo | Respetar la privacidad financiera del usuario sin recopilar datos personales en consultas generales | Se envían exclusivamente métricas agregadas (valor, coste, P&L, pesos) omitiendo transacciones y notas |
 | 2026-10-19 | Control de cuota multinivel (rate limit 15 req/min, concurrencia 2, caché 45s) | Asegurar viabilidad dentro del nivel gratuito de Gemini y evitar saturación accidental | Deduplicación instantánea de consultas idénticas y códigos HTTP 429 descriptivos |
+| 2026-10-19 | Divisa base reactiva con propagación nativa (`vs_currency=eur/usd/gbp`) | Mantener integridad financiera absoluta sin conversiones sintéticas ni aproximaciones de tipo de cambio | Consultas a CoinGecko nativas en la divisa seleccionada y formateador `Intl.NumberFormat` dinámico con soporte de micro-caps |
+| 2026-10-19 | Sistema de temas mediante variables CSS RGB y tokens Tailwind (`html.light`/`html.dark`) | Permitir alternar entre Dark, Light y System sin recarga de página y manteniendo la paleta SaaS Azul | Paleta semántica `crypto.*` dinámica con soporte completo para opacidades (`bg-crypto-surface/30`) |
+| 2026-10-19 | Aislamiento estricto de borrado en `settingsStorage` (`my-crypto-settings-v1`) | Proteger la cartera, watchlist y alertas frente a restauraciones de ajustes del sistema | "Restablecer ajustes" solo afecta a preferencias; la limpieza total requiere confirmación modal explícita |
+| 2026-10-19 | Diagnóstico de conectividad y gestión de caché en tiempo real | Ofrecer transparencia operativa al usuario sin requerir herramientas de desarrollador | Ping en vivo a CoinGecko con cálculo de latencia y botón de purga de memoria intermedia |
 
 
 

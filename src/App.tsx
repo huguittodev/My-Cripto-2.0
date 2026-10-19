@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { FormEvent } from "react";
+import type { FC, FormEvent } from "react";
 import { getMarkets, getGlobalMarketData } from "./services/api.ts";
 import type { Cryptocurrency, CryptoList, GlobalMarketData } from "./types/crypto";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
@@ -16,8 +16,12 @@ import { LoadingSpinner } from "./components/common/LoadingSpinner.tsx";
 import { ErrorMessage } from "./components/common/ErrorMessage.tsx";
 import { StatusBadge } from "./components/ui/Badge.tsx";
 import { AiAnalystView } from "./components/ai/AiAnalystView.tsx";
+import { SettingsView } from "./components/settings/SettingsView.tsx";
+import { SettingsProvider, useSettings } from "./context/SettingsContext.tsx";
 
-function App() {
+// Contenido principal de la aplicación conectado a las preferencias globales
+const AppContent: FC = () => {
+  const { currency, settings } = useSettings();
   const [coins, setCoins] = useState<CryptoList>([]);
   const [globalData, setGlobalData] = useState<GlobalMarketData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -28,8 +32,11 @@ function App() {
   const [selectedCoin, setSelectedCoin] = useState<Cryptocurrency | null>(null);
   const [activeSection, setActiveSection] = useState<NavSection>("overview");
 
-  // Motor centralizado de alertas con notificaciones visuales globales
-  const { toasts, dismissToast } = useAlerts({ externalCoins: coins });
+  // Motor centralizado de alertas con notificaciones visuales globales y divisa activa
+  const { toasts, dismissToast } = useAlerts({
+    externalCoins: coins,
+    vsCurrency: currency.toLowerCase(),
+  });
 
   // Obtiene las métricas macroeconómicas consolidadas del mercado desde CoinGecko /global
   const fetchGlobalData = useCallback(() => {
@@ -47,41 +54,53 @@ function App() {
       });
   }, []);
 
-  // Función centralizada para cargar datos desde el proveedor de mercado
-  const fetchCoins = useCallback((countStr: string, ignoreCache = false) => {
-    const num = parseInt(countStr, 10);
-    if (isNaN(num) || num <= 0) {
-      alert("Por favor, introduce un número entero mayor que 0.");
-      return;
-    }
+  // Función centralizada para cargar datos desde el proveedor de mercado en la divisa activa
+  const fetchCoins = useCallback(
+    (countStr: string, ignoreCache = false) => {
+      const num = parseInt(countStr, 10);
+      if (isNaN(num) || num <= 0) {
+        alert("Por favor, introduce un número entero mayor que 0.");
+        return;
+      }
 
-    setLoading(true);
-    setErrorMsg(null);
+      setLoading(true);
+      setErrorMsg(null);
 
-    getMarkets({ perPage: num, sparkline: true, ignoreCache })
-      .then((data) => {
-        setCoins(data);
-        setLastUpdated(new Date().toISOString());
-        // Mantiene el activo seleccionado si aún existe en el nuevo conjunto, o selecciona el primero
-        setSelectedCoin((prev) => {
-          if (!prev) return data[0] || null;
-          const found = data.find((c) => c.id === prev.id);
-          return found || data[0] || null;
+      getMarkets({
+        perPage: num,
+        vsCurrency: currency.toLowerCase(),
+        sparkline: true,
+        ignoreCache,
+      })
+        .then((data) => {
+          setCoins(data);
+          setLastUpdated(new Date().toISOString());
+          // Mantiene el activo seleccionado si aún existe en el nuevo conjunto, o selecciona el primero
+          setSelectedCoin((prev) => {
+            if (!prev) return data[0] || null;
+            const found = data.find((c) => c.id === prev.id);
+            return found || data[0] || null;
+          });
+        })
+        .catch((err: Error) => {
+          setErrorMsg(err.message || "Error al conectar con el proveedor de mercado.");
+        })
+        .finally(() => {
+          setLoading(false);
         });
-      })
-      .catch((err: Error) => {
-        setErrorMsg(err.message || "Error al conectar con el proveedor de mercado.");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+    },
+    [currency],
+  );
 
-  // Carga inicial automática al montar el componente (top 25 con sparkline para compartir caché con el explorador)
+  // Carga automática inicial y actualización reactiva al cambiar la divisa base en Ajustes
   useEffect(() => {
     let isCancelled = false;
 
-    getMarkets({ perPage: 25, sparkline: true })
+    getMarkets({
+      perPage: 25,
+      vsCurrency: currency.toLowerCase(),
+      sparkline: true,
+    })
       .then((data) => {
         if (!isCancelled) {
           setCoins(data);
@@ -120,9 +139,25 @@ function App() {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [currency]);
 
-  // Manejador del formulario de conteo de criptomonedas (conserva interacción previa)
+  // Refresco automático periódico gobernado por el ajuste de frecuencia de actualización
+  useEffect(() => {
+    if (!settings.autoRefreshInterval || settings.autoRefreshInterval <= 0) {
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      fetchCoins(value);
+      fetchGlobalData();
+    }, settings.autoRefreshInterval * 1000);
+
+    return () => {
+      clearInterval(timerId);
+    };
+  }, [settings.autoRefreshInterval, value, fetchCoins, fetchGlobalData]);
+
+  // Manejador del formulario de conteo de criptomonedas
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     fetchCoins(value);
@@ -148,23 +183,23 @@ function App() {
     });
   }, []);
 
-  // Título y subtítulo dinámico según la sección activa
+  // Título y subtítulo dinámico según la sección activa y divisa configurada
   const sectionMeta: Record<NavSection, { title: string; subtitle: string }> = {
     overview: {
       title: "Market Overview",
-      subtitle: "Monitorización en tiempo real y métricas clave del mercado cripto en EUR",
+      subtitle: `Monitorización en tiempo real y métricas clave del mercado cripto en ${currency}`,
     },
     markets: {
       title: "Mercados Globales",
-      subtitle: "Exploración de activos, rankings y filtros avanzados",
+      subtitle: `Exploración de activos, rankings y filtros avanzados en ${currency}`,
     },
     watchlist: {
       title: "Watchlist Personal",
-      subtitle: "Seguimiento selectivo de tus activos favoritos con persistencia local",
+      subtitle: `Seguimiento selectivo de tus activos favoritos en ${currency} con persistencia local`,
     },
     portfolio: {
       title: "Mi Cartera",
-      subtitle: "Registro de transacciones, valor actual, coste medio y P&L realizado",
+      subtitle: `Registro de transacciones, valor actual, coste medio y P&L en ${currency}`,
     },
     alerts: {
       title: "Alertas de Precio",
@@ -176,7 +211,7 @@ function App() {
     },
     settings: {
       title: "Ajustes del Sistema",
-      subtitle: "Preferencias de divisa base, proveedores de datos y apariencia",
+      subtitle: "Preferencias de divisa base, proveedores de datos, caché y apariencia visual",
     },
   };
 
@@ -197,7 +232,7 @@ function App() {
       {/* Vista Principal: Overview */}
       {activeSection === "overview" && (
         <div className="space-y-8 animate-fade-in">
-          {/* Sección 1: Encabezado del Dashboard */}
+          {/* Encabezado del Dashboard */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-crypto-border">
             <div>
               <div className="flex items-center gap-2.5">
@@ -207,7 +242,7 @@ function App() {
                 <StatusBadge variant="live">En vivo</StatusBadge>
               </div>
               <p className="text-xs sm:text-sm text-crypto-text-secondary mt-1">
-                Visualización técnica y datos consolidados del mercado de criptoactivos en euros (EUR).
+                Visualización técnica y datos consolidados del mercado de criptoactivos en {currency}.
               </p>
             </div>
 
@@ -236,16 +271,17 @@ function App() {
           {/* Contenido con Datos */}
           {coins.length > 0 && (
             <>
-              {/* Sección 2: Indicadores Principales */}
+              {/* Indicadores Principales */}
               <section aria-label="Indicadores Principales">
                 <MarketMetricsRow
                   coins={coins}
                   globalData={globalData}
                   isLoading={loading || globalLoading}
+                  currency={currency}
                 />
               </section>
 
-              {/* Sección 3: Zona Central de Análisis (Activo Seleccionado + Gráfico F5 + Movers) */}
+              {/* Zona Central de Análisis (Activo Seleccionado + Gráfico F5 + Movers) */}
               <section aria-label="Zona Central de Análisis">
                 <AnalysisZone
                   selectedCoin={selectedCoin}
@@ -255,15 +291,17 @@ function App() {
                     setSelectedCoin(coin);
                     setActiveSection("alerts");
                   }}
+                  currency={currency}
                 />
               </section>
 
-              {/* Sección 4: Tabla de Mercados */}
+              {/* Tabla de Mercados */}
               <section aria-label="Tabla de Mercados">
                 <MarketTable
                   selectedCoin={selectedCoin}
                   onSelectCoin={handleSelectCoin}
                   onCoinsLoaded={handleCoinsLoaded}
+                  currency={currency}
                 />
               </section>
             </>
@@ -306,7 +344,7 @@ function App() {
             <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-mono text-crypto-text-muted">
               <span>Fuente: CoinGecko v3</span>
               <span>•</span>
-              <span>Divisa: EUR</span>
+              <span>Divisa: {currency}</span>
             </div>
           </div>
 
@@ -314,6 +352,7 @@ function App() {
             selectedCoin={selectedCoin}
             onSelectCoin={handleSelectCoin}
             onCoinsLoaded={handleCoinsLoaded}
+            currency={currency}
           />
         </div>
       )}
@@ -325,6 +364,7 @@ function App() {
           onSelectCoin={handleSelectCoin}
           onNavigateToMarkets={() => setActiveSection("markets")}
           initialCoins={coins}
+          currency={currency}
         />
       )}
 
@@ -339,6 +379,7 @@ function App() {
           onNavigateToMarkets={() => setActiveSection("markets")}
           initialCoins={coins}
           preselectedCoin={selectedCoin}
+          currency={currency}
         />
       )}
 
@@ -353,6 +394,9 @@ function App() {
         />
       )}
 
+      {/* Vista de Ajustes del Sistema (Fase 10) */}
+      {activeSection === "settings" && <SettingsView />}
+
       {/* Contenedor flotante de notificaciones in-app de alertas cumplidas */}
       <ToastContainer
         toasts={toasts}
@@ -360,55 +404,36 @@ function App() {
         onNavigateToAlerts={() => setActiveSection("alerts")}
       />
 
-      {/* Secciones Futuras: Estado Preparado / En Desarrollo */}
+      {/* Fallback de seguridad si no coincide ninguna sección conocida */}
       {activeSection !== "overview" &&
         activeSection !== "markets" &&
         activeSection !== "watchlist" &&
         activeSection !== "portfolio" &&
         activeSection !== "alerts" &&
-        activeSection !== "ai" && (
-        <div className="bg-crypto-surface border border-crypto-border rounded-xl p-8 sm:p-12 text-center max-w-2xl mx-auto my-8">
-          <div className="w-12 h-12 rounded-xl bg-crypto-primary-soft border border-crypto-primary/30 flex items-center justify-center mx-auto mb-4 text-crypto-accent">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.8}
+        activeSection !== "ai" &&
+        activeSection !== "settings" && (
+          <div className="bg-crypto-surface border border-crypto-border rounded-xl p-8 sm:p-12 text-center max-w-2xl mx-auto my-8">
+            <h3 className="text-xl font-bold text-crypto-text mb-2">
+              Sección no encontrada
+            </h3>
+            <button
+              type="button"
+              onClick={() => setActiveSection("overview")}
+              className="mt-4 px-4 py-2 bg-crypto-surface-hover hover:bg-crypto-surface-raised text-crypto-text text-xs font-semibold rounded-lg border border-crypto-border transition-colors inline-flex items-center gap-2"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              />
-            </svg>
+              <span>← Volver a Market Overview</span>
+            </button>
           </div>
-
-          <div className="inline-block mb-3">
-            <StatusBadge variant="upcoming">Próxima Fase de Desarrollo</StatusBadge>
-          </div>
-
-          <h3 className="text-xl font-bold text-crypto-text mb-2">
-            {sectionMeta[activeSection].title}
-          </h3>
-
-          <p className="text-sm text-crypto-text-secondary mb-6 leading-relaxed">
-            {sectionMeta[activeSection].subtitle}. Esta funcionalidad está planificada en el roadmap de My Crypto 2.0 y se implementará de forma modular en su fase correspondiente.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setActiveSection("overview")}
-            className="px-4 py-2 bg-crypto-surface-hover hover:bg-crypto-surface-raised text-crypto-text text-xs font-semibold rounded-lg border border-crypto-border transition-colors inline-flex items-center gap-2"
-          >
-            <span>←</span>
-            <span>Volver a Market Overview</span>
-          </button>
-        </div>
-      )}
+        )}
     </AppLayout>
   );
-}
+};
 
-export default App;
+// Componente raíz que envuelve la aplicación en el proveedor de preferencias
+export default function App() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
+  );
+}

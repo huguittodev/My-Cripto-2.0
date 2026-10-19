@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FC, FormEvent } from "react";
 import type { Transaction, TransactionType } from "../../types/crypto";
 import { validateTransaction } from "../../utils/portfolioCalculations.ts";
-import { formatCurrency } from "../../utils/formatters.ts";
+import { formatCurrency, getCurrencySymbol } from "../../utils/formatters.ts";
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ interface TransactionModalProps {
   initialType?: TransactionType;
   availableHoldings: Record<string, number>;
   currentPrices: Record<string, number | null>;
+  currency?: string;
 }
 
 // Activos habituales para sugerencias rápidas en el formulario
@@ -37,6 +38,7 @@ interface TransactionFormInnerProps {
   initialType: TransactionType;
   availableHoldings: Record<string, number>;
   currentPrices: Record<string, number | null>;
+  currency?: string;
 }
 
 // Formulario interno inicializado limpiamente con props sin efectos secundarios
@@ -49,6 +51,7 @@ const TransactionFormInner: FC<TransactionFormInnerProps> = ({
   initialType,
   availableHoldings,
   currentPrices,
+  currency = "EUR",
 }) => {
   const [coinId, setCoinId] = useState<string>(
     () => editingTransaction?.coinId || initialCoinId || "bitcoin",
@@ -282,16 +285,16 @@ const TransactionFormInner: FC<TransactionFormInnerProps> = ({
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label htmlFor="price-input" className="text-xs font-semibold text-crypto-text-secondary">
-              Precio Unitario (€)
+              Precio Unitario ({getCurrencySymbol(currency)})
             </label>
             {currentPrice !== null && currentPrice !== undefined && (
               <button
                 type="button"
                 onClick={handleUseCurrentPrice}
                 className="text-[10px] text-crypto-accent hover:underline font-mono"
-                title={`Usar cotización actual (${formatCurrency(currentPrice)})`}
+                title={`Usar cotización actual (${formatCurrency(currentPrice, currency)})`}
               >
-                Mercado ({formatCurrency(currentPrice)})
+                Mercado ({formatCurrency(currentPrice, currency)})
               </button>
             )}
           </div>
@@ -314,7 +317,7 @@ const TransactionFormInner: FC<TransactionFormInnerProps> = ({
         {/* Comisión */}
         <div>
           <label htmlFor="fee-input" className="block text-xs font-semibold text-crypto-text-secondary mb-1.5">
-            Comisión (€)
+            Comisión ({getCurrencySymbol(currency)})
           </label>
           <input
             id="fee-input"
@@ -365,7 +368,7 @@ const TransactionFormInner: FC<TransactionFormInnerProps> = ({
           {type === "buy" ? "Total Desembolsado (con fee):" : "Total Recibido (neto de fee):"}
         </span>
         <span className="font-mono font-bold text-sm text-crypto-text">
-          {formatCurrency(netTotal)}
+          {formatCurrency(netTotal, currency)}
         </span>
       </div>
 
@@ -399,6 +402,7 @@ export const TransactionModal: FC<TransactionModalProps> = ({
   initialType = "buy",
   availableHoldings,
   currentPrices,
+  currency = "EUR",
 }) => {
   if (!isOpen) {
     return null;
@@ -456,6 +460,7 @@ export const TransactionModal: FC<TransactionModalProps> = ({
           initialType={initialType}
           availableHoldings={availableHoldings}
           currentPrices={currentPrices}
+          currency={currency}
         />
       </div>
     </div>

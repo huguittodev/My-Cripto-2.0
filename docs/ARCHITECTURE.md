@@ -125,12 +125,50 @@ El diseño sigue una arquitectura desacoplada por capas:
 
 ---
 
-## 6. Hoja de Ruta Pendiente
+## 6. Arquitectura de Ajustes del Sistema (Fase 10 - System Settings)
+
+El subsistema de configuración gestiona las preferencias globales de la aplicación mediante un flujo centralizado y desacoplado:
+
+### 1. Entidades y Esquema de Preferencias (`src/types/settings.ts`)
+```typescript
+export type BaseCurrency = "EUR" | "USD" | "GBP";
+export type ThemeMode = "dark" | "light" | "system";
+export type ResolvedTheme = "dark" | "light";
+
+export interface AppSettings {
+  currency: BaseCurrency;
+  theme: ThemeMode;
+  autoRefreshInterval: number; // segundos (0 = manual)
+}
+```
+
+### 2. Persistencia y Resiliencia (`src/services/settingsStorage.ts`)
+- **Clave:** `my-crypto-settings-v1` en `localStorage` con payload versionado (`version: 1`).
+- **Sanitización estricta:** La función `sanitizeSettings(raw)` verifica que cada valor pertenezca a los tipos admitidos. Ante corrupción o datos anómalos, restaura el valor por defecto seguro sin romper la sesión.
+- **Aislamiento de reinicio:** El método `resetStoredSettings()` reescribe únicamente las preferencias del sistema, preservando íntegramente las transacciones de cartera (`my-crypto-portfolio-v1`), favoritos (`my-crypto-watchlist-v1`) y alertas (`my-crypto-alerts-v1`).
+- **Borrado total con confirmación:** `clearAllStoredData()` elimina de forma controlada exclusivamente las 4 claves del proyecto.
+
+### 3. Contexto React y Sincronización Global (`src/context/SettingsContext.tsx`)
+- `SettingsProvider` expone el estado reactivo `useSettings()`.
+- Soporta cambio dinámico de tema aplicando clases `html.light` y `html.dark` y atributos `data-theme`.
+- Escucha activamente `window.matchMedia("(prefers-color-scheme: dark)")` para responder a cambios en el sistema operativo cuando el modo es `system`.
+- Proporciona formateadores centralizados `formatMoney` y `formatCompact` vinculados a la divisa activa.
+- Provee un fallback transparente cuando se invoca fuera de un `<SettingsProvider>` para pruebas unitarias aisladas.
+
+### 4. Sistema Visual Adaptativo (Tokens Tailwind + CSS Variables)
+`tailwind.config.js` mapea la paleta `crypto.*` a variables CSS con canales RGB `rgba(var(--crypto-*), <alpha-value>)`. Esto permite:
+- Cambiar instantáneamente de modo oscuro a modo claro sin recarga de página.
+- Mantener compatibilidad total con modificadores de opacidad de Tailwind (ej. `border-crypto-primary/30`, `bg-crypto-surface-hover/50`).
+
+---
+
+## 7. Estado del Roadmap
 
 | Fase | Módulo | Estado | Enfoque |
 |---|---|---|---|
-| **Fase 1** | Market Overview, Explorador, Gráficos, Watchlist | **Completada** | Datos en tiempo real, filtros, persistencia local y UI SaaS |
-| **Fase 2** | Motor de Cartera (Portfolio Engine) | **En curso** | Registro manual de transacciones, método FIFO, P&L realizado/no realizado |
-| **Fase 3** | Alertas de Precio Locales | Planificada | Umbrales técnicos en tiempo de ejecución de la terminal |
-| **Fase 4** | AI Market Analyst | Planificada | Análisis contextual, resúmenes objetivos basados en fuentes de datos |
-| **Fase 5** | Calidad final y Despliegue | Planificada | Auditoría de accesibilidad completa, métricas de rendimiento y producción |
+| **Fase 1-6** | Market Overview, Explorador, Gráficos, Watchlist | **Completada** | Datos en tiempo real, filtros, persistencia local y UI SaaS |
+| **Fase 7** | Motor de Cartera (Portfolio Engine) | **Completada** | Registro manual de transacciones, método FIFO, P&L realizado/no realizado |
+| **Fase 8** | Alertas de Precio Locales | **Completada** | Umbrales técnicos (≥ y ≤), notificaciones in-app y de escritorio |
+| **Fase 9** | AI Crypto Analyst (Gemini API) | **Completada** | Proxy backend seguro, modelo gemini-2.5-flash y análisis contextual |
+| **Fase 10** | System Settings (Ajustes Globales) | **Completada** | Divisas base (EUR/USD/GBP), temas (dark/light/system), refresco automático, diagnóstico de conectividad y gestión de datos |
+| **Fase 11** | Lanzamiento y Validación | Planificada | Auditoría final de accesibilidad, despliegue y portfolio LinkedIn |

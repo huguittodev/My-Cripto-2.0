@@ -18,12 +18,14 @@ interface MarketTableProps {
   selectedCoin: Cryptocurrency | null;
   onSelectCoin: (coin: Cryptocurrency) => void;
   onCoinsLoaded?: (coins: CryptoList) => void;
+  currency?: string;
 }
 
 export const MarketTable: FC<MarketTableProps> = ({
   selectedCoin,
   onSelectCoin,
   onCoinsLoaded,
+  currency = "EUR",
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const { isFavorite, toggleFavorite } = useWatchlist();
@@ -53,6 +55,7 @@ export const MarketTable: FC<MarketTableProps> = ({
   } = useMarketExplorer({
     initialPerPage: 25,
     onCoinsLoaded,
+    vsCurrency: currency.toLowerCase(),
   });
 
   return (
@@ -183,6 +186,7 @@ export const MarketTable: FC<MarketTableProps> = ({
               coin={coin}
               isSelected={selectedCoin?.id === coin.id}
               onSelect={onSelectCoin}
+              currency={currency}
             />
           ))}
         </div>
@@ -342,7 +346,7 @@ export const MarketTable: FC<MarketTableProps> = ({
 
                     {/* 3. Precio */}
                     <td className="py-3.5 px-3 sm:px-4 text-right font-mono font-bold text-crypto-text tabular-nums">
-                      {formatCurrency(coin.current_price)}
+                      {formatCurrency(coin.current_price, currency)}
                     </td>
 
                     {/* 4. Variación 24h */}
@@ -352,12 +356,12 @@ export const MarketTable: FC<MarketTableProps> = ({
 
                     {/* 5. Capitalización */}
                     <td className="hidden sm:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
-                      {formatCompactNumber(coin.market_cap)}
+                      {formatCompactNumber(coin.market_cap, currency)}
                     </td>
 
                     {/* 6. Volumen 24h */}
                     <td className="hidden md:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
-                      {coin.total_volume ? formatCompactNumber(coin.total_volume) : "—"}
+                      {coin.total_volume ? formatCompactNumber(coin.total_volume, currency) : "—"}
                     </td>
 
                     {/* 7. Minigráfico de 7 días */}

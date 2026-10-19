@@ -16,6 +16,7 @@ interface WatchlistViewProps {
   onSelectCoin: (coin: Cryptocurrency) => void;
   onNavigateToMarkets?: () => void;
   initialCoins?: CryptoList;
+  currency?: string;
 }
 
 export interface WatchlistItem {
@@ -28,6 +29,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
   onSelectCoin,
   onNavigateToMarkets,
   initialCoins,
+  currency = "EUR",
 }) => {
   const { watchlistIds, isFavorite, toggleFavorite, isStorageAvailable } = useWatchlist();
 
@@ -67,6 +69,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
     try {
       const data = await getMarkets({
         ids,
+        vsCurrency: currency.toLowerCase(),
         sparkline: true,
         signal: controller.signal,
         ignoreCache,
@@ -97,7 +100,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [currency]);
 
   // Carga inicial y actualización automática al modificarse los favoritos guardados
   useEffect(() => {
@@ -158,7 +161,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
             </span>
           </div>
           <p className="text-xs sm:text-sm text-crypto-text-secondary mt-1">
-            Seguimiento selectivo de tus criptomonedas favoritas con cotizaciones en tiempo real en EUR.
+            Seguimiento selectivo de tus criptomonedas favoritas con cotizaciones en tiempo real en {currency}.
           </p>
         </div>
 
@@ -317,6 +320,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                     onSelect={onSelectCoin}
                     isFavorite={isFavorite(coin.id)}
                     onToggleFavorite={toggleFavorite}
+                    currency={currency}
                   />
                   {!hasMarketData && (
                     <div className="absolute top-2 right-12 z-10">
@@ -406,7 +410,7 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
                         {/* Precio Actual */}
                         <td className="py-3.5 px-3 sm:px-4 text-right font-mono font-bold text-crypto-text tabular-nums">
                           {hasMarketData ? (
-                            formatCurrency(coin.current_price)
+                            formatCurrency(coin.current_price, currency)
                           ) : (
                             <span className="text-crypto-text-muted font-normal text-xs font-mono">—</span>
                           )}
@@ -425,12 +429,12 @@ export const WatchlistView: FC<WatchlistViewProps> = ({
 
                         {/* Capitalización */}
                         <td className="hidden sm:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
-                          {hasMarketData && coin.market_cap ? formatCompactNumber(coin.market_cap) : "—"}
+                          {hasMarketData && coin.market_cap ? formatCompactNumber(coin.market_cap, currency) : "—"}
                         </td>
 
                         {/* Volumen 24h */}
                         <td className="hidden md:table-cell py-3.5 px-3 sm:px-4 text-right font-mono text-crypto-text-secondary tabular-nums">
-                          {hasMarketData && coin.total_volume ? formatCompactNumber(coin.total_volume) : "—"}
+                          {hasMarketData && coin.total_volume ? formatCompactNumber(coin.total_volume, currency) : "—"}
                         </td>
 
                         {/* Minigráfico de 7 días */}

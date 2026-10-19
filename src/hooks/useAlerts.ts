@@ -30,6 +30,7 @@ import {
 export interface UseAlertsOptions {
   externalCoins?: CryptoList;
   autoPollIntervalMs?: number;
+  vsCurrency?: string;
 }
 
 export interface UseAlertsReturn {
@@ -72,6 +73,7 @@ const DEFAULT_POLL_INTERVAL_MS = 30000;
 export const useAlerts = ({
   externalCoins = [],
   autoPollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
+  vsCurrency = "eur",
 }: UseAlertsOptions = {}): UseAlertsReturn => {
   const [alerts, setAlerts] = useState<PriceAlert[]>(() => getStoredAlerts());
   const [currentPrices, setCurrentPrices] = useState<Record<string, number | null>>({});
@@ -229,6 +231,7 @@ export const useAlerts = ({
       try {
         const marketItems = await getMarkets({
           ids: neededCoinIds,
+          vsCurrency: vsCurrency.toLowerCase(),
           sparkline: false,
           signal: controller.signal,
           ignoreCache,
@@ -267,7 +270,7 @@ export const useAlerts = ({
         }
       }
     },
-    [neededCoinIds, runEvaluation],
+    [neededCoinIds, runEvaluation, vsCurrency],
   );
 
   // Evaluación inicial cuando cambian los precios en currentPrices

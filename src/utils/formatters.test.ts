@@ -27,6 +27,14 @@ describe("formatters utils", () => {
       expect(formatted).toContain("0,00000340");
     });
 
+    it("debe formatear en USD y GBP correctamente", () => {
+      const usdFormatted = formatCurrency(50000, "USD");
+      expect(usdFormatted).toMatch(/50\.000,00/);
+
+      const gbpFormatted = formatCurrency(42000, "GBP");
+      expect(gbpFormatted).toMatch(/42\.000,00/);
+    });
+
     it("debe devolver '—' para valores nulos o indefinidos", () => {
       expect(formatCurrency(null)).toBe("—");
       expect(formatCurrency(undefined)).toBe("—");
@@ -39,6 +47,14 @@ describe("formatters utils", () => {
       const formatted = formatCompactNumber(1200000000, "€");
       expect(formatted).toContain("€");
       expect(formatted.length).toBeLessThan(12);
+    });
+
+    it("debe aceptar códigos de divisa USD y GBP como sufijo", () => {
+      const usd = formatCompactNumber(2500000, "USD");
+      expect(usd).toContain("$");
+
+      const gbp = formatCompactNumber(2500000, "GBP");
+      expect(gbp).toContain("£");
     });
 
     it("debe devolver '—' para valores inválidos", () => {

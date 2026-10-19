@@ -12,6 +12,7 @@ interface InteractivePriceChartProps {
   onRetry?: () => void;
   hoveredPoint: ChartPoint | null;
   onHoverPoint: (point: ChartPoint | null) => void;
+  currency?: string;
 }
 
 const SVG_WIDTH = 800;
@@ -56,6 +57,7 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
   onRetry,
   hoveredPoint,
   onHoverPoint,
+  currency = "EUR",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -270,7 +272,7 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
           fontSize="9"
           fontFamily="monospace"
         >
-          Máx: {formatCurrency(maxPrice)}
+          Máx: {formatCurrency(maxPrice, currency)}
         </text>
 
         <line
@@ -300,7 +302,7 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
           fontSize="9"
           fontFamily="monospace"
         >
-          Mín: {formatCurrency(minPrice)}
+          Mín: {formatCurrency(minPrice, currency)}
         </text>
 
         {/* Área rellena con degradado semántico */}
@@ -376,7 +378,7 @@ export const InteractivePriceChart: FC<InteractivePriceChartProps> = ({
               {formatDateTime(hoveredPoint.timestamp)}
             </div>
             <div className="text-sm font-bold text-crypto-text font-mono tabular-nums">
-              {formatCurrency(hoveredPoint.price)}
+              {formatCurrency(hoveredPoint.price, currency)}
             </div>
             {performance.startPrice > 0 && (
               <div className="text-[10px] font-mono font-semibold mt-0.5 flex items-center gap-1">

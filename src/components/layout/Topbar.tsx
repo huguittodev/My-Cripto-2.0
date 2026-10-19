@@ -1,6 +1,8 @@
 import type { FC, FormEvent } from "react";
 import { StatusBadge } from "../ui/Badge.tsx";
 import { formatDateTime } from "../../utils/formatters.ts";
+import { useSettings } from "../../context/SettingsContext.tsx";
+import { SUPPORTED_CURRENCIES } from "../../types/settings.ts";
 
 interface TopbarProps {
   onOpenMobileMenu: () => void;
@@ -27,6 +29,8 @@ export const Topbar: FC<TopbarProps> = ({
   lastUpdated,
   hasError,
 }) => {
+  const { currency } = useSettings();
+  const currencyMeta = SUPPORTED_CURRENCIES[currency] || { symbol: "€", label: "EUR" };
   return (
     <header className="h-16 lg:h-20 bg-crypto-surface/85 backdrop-blur-md border-b border-crypto-border sticky top-0 z-20 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
       {/* Left: Mobile Toggle & Section Title */}
@@ -70,10 +74,10 @@ export const Topbar: FC<TopbarProps> = ({
 
       {/* Right: API Controls & Data Feed Info */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        {/* Base Currency Badge (Real: CoinGecko vs_currency=eur) */}
+        {/* Base Currency Badge (Real: CoinGecko vs_currency) */}
         <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-crypto-surface-raised border border-crypto-border text-xs font-mono text-crypto-text-secondary">
           <span className="text-crypto-text-muted">Moneda:</span>
-          <span className="font-semibold text-crypto-text">EUR (€)</span>
+          <span className="font-semibold text-crypto-text">{currency} ({currencyMeta.symbol})</span>
         </div>
 
         {/* Last updated indicator */}

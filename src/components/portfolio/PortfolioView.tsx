@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import type { FC } from "react";
 import { usePortfolio } from "../../hooks/usePortfolio.ts";
+import { useSettings } from "../../context/SettingsContext.tsx";
 import type { Transaction, TransactionType } from "../../types/crypto";
 import { PortfolioSummaryRow } from "./PortfolioSummaryRow.tsx";
 import { PortfolioDistribution } from "./PortfolioDistribution.tsx";
@@ -14,6 +15,7 @@ interface PortfolioViewProps {
 }
 
 export const PortfolioView: FC<PortfolioViewProps> = ({ onNavigateToMarkets }) => {
+  const { currency } = useSettings();
   const {
     transactions,
     positions,
@@ -27,7 +29,7 @@ export const PortfolioView: FC<PortfolioViewProps> = ({ onNavigateToMarkets }) =
     clearPortfolio,
     refreshPrices,
     currentPrices,
-  } = usePortfolio();
+  } = usePortfolio({ vsCurrency: currency.toLowerCase() });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -233,7 +235,11 @@ export const PortfolioView: FC<PortfolioViewProps> = ({ onNavigateToMarkets }) =
         <>
           {/* 5. Tarjetas de Resumen Global de Cartera */}
           <section aria-label="Resumen de Cartera">
-            <PortfolioSummaryRow summary={summary} isLoadingPrices={isLoadingPrices} />
+            <PortfolioSummaryRow
+              summary={summary}
+              isLoadingPrices={isLoadingPrices}
+              currency={currency}
+            />
           </section>
 
           {/* 6. Distribución de Activos */}
@@ -278,6 +284,7 @@ export const PortfolioView: FC<PortfolioViewProps> = ({ onNavigateToMarkets }) =
                 positions={positions}
                 onOpenTrade={(coinId, initialType) => handleOpenNewTrade(coinId, initialType)}
                 isLoadingPrices={isLoadingPrices}
+                currency={currency}
               />
             </section>
           )}
@@ -288,6 +295,7 @@ export const PortfolioView: FC<PortfolioViewProps> = ({ onNavigateToMarkets }) =
                 transactions={transactions}
                 onEdit={handleEditTrade}
                 onDelete={deleteTransaction}
+                currency={currency}
               />
             </section>
           )}
@@ -305,6 +313,7 @@ export const PortfolioView: FC<PortfolioViewProps> = ({ onNavigateToMarkets }) =
         initialType={modalType}
         availableHoldings={availableHoldings}
         currentPrices={currentPrices}
+        currency={currency}
       />
     </div>
   );

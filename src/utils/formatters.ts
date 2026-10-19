@@ -41,15 +41,33 @@ export function formatCurrency(
 }
 
 /**
- * Formatea un número grande a notación compacta legible (ej: 1,23 B € o 45,6 M €).
+ * Obtiene el símbolo correspondiente a una divisa ISO o devuelve el texto suministrado.
+ */
+export function getCurrencySymbol(currency = "EUR"): string {
+  switch (currency.toUpperCase()) {
+    case "EUR":
+      return "€";
+    case "USD":
+      return "$";
+    case "GBP":
+      return "£";
+    default:
+      return currency;
+  }
+}
+
+/**
+ * Formatea un número grande a notación compacta legible (ej: 1,23 B € o 45,6 M $).
  */
 export function formatCompactNumber(
   value: number | null | undefined,
-  suffix = "€",
+  suffixOrCurrency = "€",
 ): string {
   if (value === null || value === undefined || isNaN(value)) {
     return "—";
   }
+
+  const suffix = getCurrencySymbol(suffixOrCurrency);
 
   const formatted = new Intl.NumberFormat("es-ES", {
     notation: "compact",

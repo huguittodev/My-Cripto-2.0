@@ -11,6 +11,7 @@ interface AlertsViewProps {
   onNavigateToMarkets?: () => void;
   initialCoins?: CryptoList;
   preselectedCoin?: Cryptocurrency | null;
+  currency?: string;
 }
 
 type AlertFilterTab = "all" | "active" | "triggered" | "inactive";
@@ -19,6 +20,7 @@ export const AlertsView: FC<AlertsViewProps> = ({
   onNavigateToMarkets,
   initialCoins = [],
   preselectedCoin = null,
+  currency = "EUR",
 }) => {
   const {
     alerts,
@@ -39,7 +41,7 @@ export const AlertsView: FC<AlertsViewProps> = ({
     clearAlerts,
     refreshPrices,
     requestNotificationPermission,
-  } = useAlerts({ externalCoins: initialCoins });
+  } = useAlerts({ externalCoins: initialCoins, vsCurrency: currency.toLowerCase() });
 
   const [activeTab, setActiveTab] = useState<AlertFilterTab>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -416,6 +418,7 @@ export const AlertsView: FC<AlertsViewProps> = ({
         initialCoin={targetCoinForNew}
         existingAlerts={alerts}
         currentPrices={currentPrices}
+        currency={currency}
       />
     </div>
   );

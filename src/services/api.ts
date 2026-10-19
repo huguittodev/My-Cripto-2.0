@@ -71,6 +71,41 @@ export const clearChartCache = (): void => {
 };
 
 /**
+ * Limpia la totalidad de la caché en memoria del gestor de peticiones.
+ */
+export const clearAllMarketCache = (): void => {
+  requestManager.clearCache();
+};
+
+/**
+ * Comprueba la conectividad real con el proveedor de mercado activo y mide la latencia.
+ */
+export const checkMarketProviderConnection = async (): Promise<{
+  ok: boolean;
+  latencyMs: number;
+  message: string;
+}> => {
+  const start = Date.now();
+  try {
+    await activeProvider.getMarkets({ perPage: 1, sparkline: false, ignoreCache: true });
+    const latencyMs = Date.now() - start;
+    return {
+      ok: true,
+      latencyMs,
+      message: `Conexión activa y verificada con ${activeProvider.name}`,
+    };
+  } catch (err: unknown) {
+    const latencyMs = Date.now() - start;
+    const msg = err instanceof Error ? err.message : "Error al conectar con el proveedor de mercado";
+    return {
+      ok: false,
+      latencyMs,
+      message: msg,
+    };
+  }
+};
+
+/**
  * Consulta de mercados paginada, con sparklines y filtros por IDs.
  */
 export const getMarkets = async (params: GetMarketsParams = {}): Promise<CryptoList> => {

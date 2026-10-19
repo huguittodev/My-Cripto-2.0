@@ -16,11 +16,13 @@ import {
 interface UseMarketExplorerOptions {
   initialPerPage?: number;
   onCoinsLoaded?: (coins: CryptoList) => void;
+  vsCurrency?: string;
 }
 
 export function useMarketExplorer({
   initialPerPage = 25,
   onCoinsLoaded,
+  vsCurrency = "eur",
 }: UseMarketExplorerOptions = {}) {
   const [coins, setCoins] = useState<CryptoList>([]);
   const [page, setPage] = useState<number>(1);
@@ -79,6 +81,7 @@ export function useMarketExplorer({
           perPage: targetPerPage,
           order: targetOrder,
           sparkline: true,
+          vsCurrency: vsCurrency.toLowerCase(),
           signal: controller.signal,
           ignoreCache,
         });
@@ -106,7 +109,7 @@ export function useMarketExplorer({
         }
       }
     },
-    [onCoinsLoaded],
+    [onCoinsLoaded, vsCurrency],
   );
 
   // Ejecuta la búsqueda remota global cuando el usuario introduce un término de búsqueda
@@ -155,6 +158,7 @@ export function useMarketExplorer({
         const marketData = await getMarkets({
           ids: topIds,
           sparkline: true,
+          vsCurrency: vsCurrency.toLowerCase(),
           signal: controller.signal,
           ignoreCache,
         });
@@ -182,16 +186,15 @@ export function useMarketExplorer({
         }
       }
     },
-    [fetchPage, onCoinsLoaded, perPage, serverOrder],
+    [fetchPage, onCoinsLoaded, perPage, serverOrder, vsCurrency],
   );
 
-  // Carga inicial y cambios en paginación u ordenación en servidor
+  // Carga inicial y cambios en paginación u ordenación en servidor o divisa base
   useEffect(() => {
     if (!searchTerm.trim()) {
       fetchPage(page, perPage, serverOrder);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, perPage, serverOrder]);
+  }, [page, perPage, serverOrder, vsCurrency, fetchPage, searchTerm]);
 
   // Manejo de búsqueda con debounce (400ms) para proteger límites de la API
   useEffect(() => {

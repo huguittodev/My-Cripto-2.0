@@ -12,6 +12,7 @@ interface CoinCardProps {
   onSelect?: (coin: Cryptocurrency) => void;
   isFavorite?: boolean;
   onToggleFavorite?: (coinId: string) => void;
+  currency?: string;
 }
 
 /**
@@ -24,6 +25,7 @@ export const CoinCard: FC<CoinCardProps> = ({
   onSelect,
   isFavorite: propIsFavorite,
   onToggleFavorite: propOnToggleFavorite,
+  currency = "EUR",
 }) => {
   const { isFavorite: hookIsFavorite, toggleFavorite: hookToggleFavorite } = useWatchlist();
   const isFav = propIsFavorite !== undefined ? propIsFavorite : hookIsFavorite(coin.id);
@@ -96,7 +98,7 @@ export const CoinCard: FC<CoinCardProps> = ({
         <div>
           <span className="text-xs text-crypto-text-muted block mb-0.5">Precio</span>
           <p className="text-xl font-mono font-bold text-crypto-text tabular-nums">
-            {coin.last_updated ? formatCurrency(coin.current_price) : "—"}
+            {coin.last_updated ? formatCurrency(coin.current_price, currency) : "—"}
           </p>
         </div>
 
@@ -126,7 +128,7 @@ export const CoinCard: FC<CoinCardProps> = ({
       )}
 
       <div className="mt-4 pt-3 border-t border-crypto-border/60 flex items-center justify-between text-xs text-crypto-text-muted font-mono">
-        <span>Cap: {coin.last_updated && coin.market_cap ? formatCompactNumber(coin.market_cap) : "—"}</span>
+        <span>Cap: {coin.last_updated && coin.market_cap ? formatCompactNumber(coin.market_cap, currency) : "—"}</span>
         <span className="text-[11px] text-crypto-accent group-hover:underline">
           {isSelected ? "Seleccionado" : "Ver detalle →"}
         </span>
