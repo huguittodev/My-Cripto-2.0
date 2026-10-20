@@ -103,4 +103,22 @@ describe("AiAnalystView Component", () => {
     expect(html).toContain("Bitcoin (BTC)");
     expect(html).toContain("Ethereum (ETH)");
   });
+
+  it("aplica clases de viewport dinámico móvil (dvh) y contenedor desplazable sin overflow horizontal", () => {
+    const html = renderToString(
+      <AiAnalystView
+        selectedCoin={mockCoin}
+        coins={mockCoins}
+        onSelectCoin={vi.fn()}
+      />
+    );
+
+    // Contenedor principal adaptable a altura de viewport móvil
+    expect(html).toContain("h-[calc(100dvh-5rem)]");
+    expect(html).toContain("min-h-0");
+    // Área de mensajes con contención de desplazamiento táctil
+    expect(html).toContain("overscroll-contain");
+    // Botón de envío con tamaño táctil cómodo para pulgar
+    expect(html).toContain("w-10 h-10");
+  });
 });

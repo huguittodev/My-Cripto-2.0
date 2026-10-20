@@ -69,4 +69,20 @@ describe("AiSuggestedQuestions Component", () => {
 
     expect(html).toContain("disabled");
   });
+
+  it("aplica clases de desplazamiento horizontal y no-scrollbar para ahorrar espacio vertical en móvil", () => {
+    const onSelect = vi.fn();
+    const html = renderToString(
+      <AiSuggestedQuestions
+        selectedCoin={mockCoin}
+        onSelectQuestion={onSelect}
+      />
+    );
+
+    // Contenedor de una sola fila con scroll horizontal
+    expect(html).toContain("overflow-x-auto");
+    expect(html).toContain("no-scrollbar");
+    // Chips sin salto de línea individual
+    expect(html).toContain("whitespace-nowrap");
+  });
 });

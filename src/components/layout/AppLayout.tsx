@@ -67,11 +67,22 @@ export const AppLayout: FC<AppLayoutProps> = ({
           hasError={hasError}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-8">
+        {/* En la sección de IA optimizamos el padding y altura en móvil para maximizar el área de conversación */}
+        <main
+          className={
+            activeSection === "ai"
+              ? "flex-1 p-2 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto flex flex-col min-h-0"
+              : "flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-8"
+          }
+        >
           {children}
         </main>
 
-        <footer className="py-6 px-4 sm:px-8 border-t border-crypto-border text-center text-xs text-crypto-text-muted">
+        <footer
+          className={`py-6 px-4 sm:px-8 border-t border-crypto-border text-center text-xs text-crypto-text-muted ${
+            activeSection === "ai" ? "hidden sm:block" : ""
+          }`}
+        >
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="My Crypto 2.0" className="w-4 h-4 object-contain opacity-80" />

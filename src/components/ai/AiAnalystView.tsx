@@ -66,6 +66,20 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isGenerating]);
 
+  // Auto-ajusta la altura del campo de entrada según el texto del usuario (máximo 120px)
+  const adjustTextareaHeight = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const nextHeight = Math.min(el.scrollHeight, 120);
+    el.style.height = `${nextHeight}px`;
+  };
+
+  const handleInputChange = (val: string) => {
+    setInputText(val.slice(0, 1000));
+    adjustTextareaHeight();
+  };
+
   const handleSubmit = (e?: FormEvent) => {
     if (e) e.preventDefault();
     const trimmed = inputText.trim();
@@ -73,6 +87,9 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
 
     sendMessage(trimmed);
     setInputText("");
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -86,18 +103,19 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
     setInputText(question);
     if (inputRef.current) {
       inputRef.current.focus();
+      setTimeout(adjustTextareaHeight, 0);
     }
   };
 
   const activeCoin = selectedCoin || (coins.length > 0 ? coins[0] : null);
 
   return (
-    <div className="space-y-4 animate-fade-in flex flex-col h-[calc(100vh-140px)] min-h-[600px]">
-      {/* 1. Encabezado de la Terminal */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-crypto-border flex-shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-crypto-text tracking-tight flex items-center gap-2">
+    <div className="flex-1 flex flex-col h-[calc(100dvh-5rem)] sm:h-[calc(100vh-140px)] sm:min-h-[600px] w-full max-w-full space-y-2 sm:space-y-4 animate-fade-in min-h-0">
+      {/* 1. Encabezado compacto y optimizado para móvil */}
+      <div className="flex items-center justify-between gap-2 pb-2 sm:pb-3 border-b border-crypto-border flex-shrink-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap sm:flex-nowrap">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-crypto-text tracking-tight flex items-center gap-1.5 sm:gap-2 truncate">
               <span className="text-crypto-accent">✦</span>
               <span>AI Crypto Analyst</span>
             </h2>
@@ -108,26 +126,26 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
               <StatusBadge variant="neutral">Configuración Pendiente</StatusBadge>
             )}
 
-            <span className="text-xs font-mono px-2 py-0.5 rounded bg-crypto-primary-soft text-crypto-accent border border-crypto-accent/20">
+            <span className="hidden xs:inline-block text-[11px] sm:text-xs font-mono px-2 py-0.5 rounded bg-crypto-primary-soft text-crypto-accent border border-crypto-accent/20">
               {status?.model || "gemini-2.5-flash"}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-crypto-text-secondary mt-1">
+          <p className="hidden sm:block text-xs sm:text-sm text-crypto-text-secondary mt-1">
             Asistente analítico inteligente fundamentado exclusivamente en datos de mercado verificados.
           </p>
         </div>
 
         {/* Acciones de Cabecera */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
             onClick={clearConversation}
-            className="px-3 py-1.5 rounded-lg bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-text-secondary hover:text-crypto-text border border-crypto-border text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-crypto-surface-raised hover:bg-crypto-surface-hover text-crypto-text-secondary hover:text-crypto-text border border-crypto-border text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap"
             title="Reiniciar conversación y borrar historial de la sesión"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-3.5 h-3.5"
+              className="w-3.5 h-3.5 flex-shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -139,24 +157,37 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            <span>Nueva Conversación</span>
+            <span className="hidden sm:inline">Nueva Conversación</span>
+            <span className="sm:hidden">Nueva</span>
           </button>
         </div>
       </div>
 
       {/* 2. Barra de Contexto de Mercado Activo */}
-      <div className="bg-crypto-surface border border-crypto-border rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs flex-shrink-0">
+      <div className="bg-crypto-surface border border-crypto-border rounded-lg sm:rounded-xl p-2 sm:p-3 flex items-center justify-between gap-2 text-xs flex-shrink-0">
         {/* Activo de contexto */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-crypto-text-muted font-mono uppercase text-[10px]">Contexto Activo:</span>
+        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1 overflow-hidden">
+          <span className="hidden sm:inline text-crypto-text-muted font-mono uppercase text-[10px] flex-shrink-0">
+            Contexto Activo:
+          </span>
           {activeCoin ? (
-            <div className="flex items-center gap-2 bg-crypto-surface-raised px-2.5 py-1 rounded-lg border border-crypto-border/60 max-w-full">
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-crypto-surface-raised px-2 sm:px-2.5 py-1 rounded-lg border border-crypto-border/60 max-w-full min-w-0">
               {activeCoin.image && (
-                <img src={activeCoin.image} alt={activeCoin.name} className="w-4 h-4 rounded-full object-contain flex-shrink-0" />
+                <img
+                  src={activeCoin.image}
+                  alt={activeCoin.name}
+                  className="w-4 h-4 rounded-full object-contain flex-shrink-0"
+                />
               )}
-              <span className="font-bold text-crypto-text truncate">{activeCoin.name}</span>
-              <span className="text-crypto-text-muted uppercase font-mono text-[10px] flex-shrink-0">{activeCoin.symbol}</span>
-              <span className="font-mono text-crypto-accent whitespace-nowrap flex-shrink-0">{formatCurrency(activeCoin.current_price)}</span>
+              <span className="font-bold text-crypto-text truncate max-w-[80px] xs:max-w-[120px] sm:max-w-none">
+                {activeCoin.name}
+              </span>
+              <span className="text-crypto-text-muted uppercase font-mono text-[10px] flex-shrink-0">
+                {activeCoin.symbol}
+              </span>
+              <span className="font-mono text-crypto-accent whitespace-nowrap flex-shrink-0 text-[11px] sm:text-xs">
+                {formatCurrency(activeCoin.current_price)}
+              </span>
             </div>
           ) : (
             <span className="text-crypto-text-muted">Ningún activo fijado</span>
@@ -170,7 +201,7 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
                 const found = coins.find((c) => c.id === e.target.value);
                 if (found) onSelectCoin(found);
               }}
-              className="bg-crypto-surface-raised text-crypto-text text-xs rounded border border-crypto-border px-2 py-1 focus:outline-none focus:border-crypto-primary font-mono"
+              className="bg-crypto-surface-raised text-crypto-text text-xs rounded border border-crypto-border px-1.5 sm:px-2 py-1 focus:outline-none focus:border-crypto-primary font-mono max-w-[100px] sm:max-w-none truncate"
             >
               {coins.slice(0, 15).map((c) => (
                 <option key={c.id} value={c.id}>
@@ -184,7 +215,7 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
             <button
               type="button"
               onClick={onNavigateToMarkets}
-              className="text-crypto-accent hover:underline text-[11px] font-mono hidden sm:inline"
+              className="text-crypto-accent hover:underline text-[11px] font-mono hidden md:inline whitespace-nowrap"
             >
               Explorar mercados →
             </button>
@@ -192,27 +223,33 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
         </div>
 
         {/* Toggle de Inclusión de Cartera */}
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 cursor-pointer select-none text-crypto-text-secondary hover:text-crypto-text transition-colors">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none text-crypto-text-secondary hover:text-crypto-text transition-colors">
             <input
               type="checkbox"
               checked={includePortfolio}
               onChange={(e) => setIncludePortfolio(e.target.checked)}
               className="rounded bg-crypto-surface-raised border-crypto-border text-crypto-primary focus:ring-0 focus:outline-none cursor-pointer"
             />
-            <span className="text-xs">Incluir resumen de mi cartera</span>
+            <span className="text-xs hidden md:inline">Incluir resumen de mi cartera</span>
+            <span className="text-xs md:hidden">Mi cartera</span>
           </label>
         </div>
       </div>
 
       {/* Aviso informativo si se incluye cartera */}
       {includePortfolio && (
-        <div className="p-2.5 rounded-lg bg-crypto-primary-soft/40 border border-crypto-primary/30 text-[11px] text-crypto-text-secondary flex items-center justify-between gap-2 flex-shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="p-2 sm:p-2.5 rounded-lg bg-crypto-primary-soft/40 border border-crypto-primary/30 text-[11px] text-crypto-text-secondary flex items-center justify-between gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span>🛡️</span>
             <span>
-              <strong>Privacidad garantizada:</strong> Se adjuntará únicamente un resumen anónimo (valoración global,
-              P&L latente y reparto por activos). No se envían transacciones individuales ni notas.
+              <strong className="text-crypto-text">Privacidad garantizada:</strong>{" "}
+              <span className="hidden sm:inline">
+                Se adjuntará únicamente un resumen anónimo (valoración global, P&L latente y reparto por activos). No se envían transacciones individuales ni notas.
+              </span>
+              <span className="sm:hidden">
+                Resumen anónimo de métricas y reparto adjunto. Sin transacciones ni notas.
+              </span>
             </span>
           </div>
           <button
@@ -227,14 +264,14 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
 
       {/* 3. Aviso si falta la clave de Gemini en el servidor */}
       {!isLoadingStatus && status && !status.isConfigured && (
-        <div className="p-4 rounded-xl bg-crypto-warning/10 border border-crypto-warning/30 text-xs text-crypto-text flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-shrink-0">
-          <div className="flex items-start gap-3">
+        <div className="p-3 sm:p-4 rounded-xl bg-crypto-warning/10 border border-crypto-warning/30 text-xs text-crypto-text flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-shrink-0">
+          <div className="flex items-start gap-2.5 sm:gap-3">
             <span className="text-xl">⚙️</span>
             <div>
               <strong className="text-crypto-warning font-semibold block text-sm">
                 Configuración de Gemini API pendiente
               </strong>
-              <p className="text-crypto-text-secondary mt-0.5 leading-relaxed">
+              <p className="text-crypto-text-secondary mt-0.5 leading-relaxed text-xs">
                 Para interactuar con el AI Crypto Analyst, añade tu clave gratuita en el archivo{" "}
                 <code className="text-crypto-accent font-mono">.env</code> del proyecto como{" "}
                 <code className="text-crypto-accent font-mono">GEMINI_API_KEY=tu_clave</code> y reinicia el servidor.
@@ -262,7 +299,7 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
       )}
 
       {/* 4. Contenedor de Mensajes de Conversación */}
-      <div className="flex-1 bg-crypto-surface border border-crypto-border rounded-xl p-4 sm:p-6 overflow-y-auto space-y-4">
+      <div className="flex-1 bg-crypto-surface border border-crypto-border rounded-xl p-2.5 sm:p-5 md:p-6 overflow-y-auto space-y-3.5 sm:space-y-4 min-h-0 overscroll-contain">
         {messages.map((message) => (
           <AiMessageItem key={message.id} message={message} />
         ))}
@@ -329,31 +366,31 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
       </div>
 
       {/* 6. Formulario de Entrada */}
-      <form onSubmit={handleSubmit} className="flex-shrink-0 space-y-2">
-        <div className="relative bg-crypto-surface border border-crypto-border rounded-xl shadow-lg focus-within:border-crypto-primary transition-colors flex items-end">
+      <form onSubmit={handleSubmit} className="flex-shrink-0 space-y-1.5 pb-[max(0px,env(safe-area-inset-bottom))]">
+        <div className="bg-crypto-surface border border-crypto-border rounded-xl shadow-lg focus-within:border-crypto-primary transition-colors flex items-end p-1.5 sm:p-2 gap-2">
           <textarea
             ref={inputRef}
-            rows={2}
+            rows={1}
             value={inputText}
-            onChange={(e) => setInputText(e.target.value.slice(0, 1000))}
+            onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isGenerating}
             placeholder={
               status?.isConfigured
-                ? "Haz una pregunta sobre tendencias, volumen o activos (Enter para enviar, Shift+Enter para nueva línea)..."
+                ? "Haz una pregunta sobre tendencias, volumen o activos..."
                 : "Configura GEMINI_API_KEY para habilitar consultas interactivas..."
             }
-            className="w-full bg-transparent text-crypto-text text-xs sm:text-sm p-3.5 pr-24 focus:outline-none resize-none placeholder:text-crypto-text-muted"
+            className="flex-1 bg-transparent text-crypto-text text-base p-2 sm:p-2.5 focus:outline-none resize-none placeholder:text-crypto-text-muted min-h-[42px] max-h-[120px] leading-relaxed"
           />
 
-          <div className="absolute right-3 bottom-2.5 flex items-center gap-2">
-            <span className="text-[10px] font-mono text-crypto-text-muted select-none">
+          <div className="flex items-center gap-1.5 sm:gap-2 pb-1 pr-1 flex-shrink-0">
+            <span className="text-[10px] font-mono text-crypto-text-muted select-none hidden xs:inline">
               {inputText.length}/1000
             </span>
             <button
               type="submit"
               disabled={isGenerating || !inputText.trim() || !status?.isConfigured}
-              className="p-2 rounded-lg bg-crypto-primary hover:bg-crypto-primary-hover text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-crypto-primary/20"
+              className="w-10 h-10 rounded-lg bg-crypto-primary hover:bg-crypto-primary-hover active:bg-crypto-primary-hover text-white flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-crypto-primary/20 flex-shrink-0"
               title="Enviar consulta al analista"
               aria-label="Enviar consulta"
             >
@@ -372,7 +409,7 @@ export const AiAnalystView: FC<AiAnalystViewProps> = ({
         </div>
 
         {/* Aviso de Responsabilidad Financiera */}
-        <p className="text-[10px] text-crypto-text-muted text-center font-mono">
+        <p className="text-[10px] text-crypto-text-muted text-center font-mono leading-tight">
           La inteligencia artificial puede cometer errores. Contrasta siempre con cotizaciones oficiales. No es
           asesoramiento de inversión.
         </p>

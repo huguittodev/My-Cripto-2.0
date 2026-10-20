@@ -27,9 +27,10 @@ export const AiSuggestedQuestions: FC<AiSuggestedQuestionsProps> = ({
     suggestions.push("Analiza la distribución de mi cartera respecto al mercado");
   }
 
+  // En móviles las sugerencias se desplazan horizontalmente para no consumir altura del chat
   return (
-    <div className="flex flex-wrap items-center gap-2 pt-2">
-      <span className="text-[11px] font-mono text-crypto-text-muted flex items-center gap-1">
+    <div className="flex items-center gap-2 pt-1 pb-1 overflow-x-auto sm:flex-wrap sm:overflow-x-visible no-scrollbar -mx-0.5 px-0.5">
+      <span className="text-[11px] font-mono text-crypto-text-muted flex items-center gap-1 flex-shrink-0">
         <span>💡</span>
         <span>Sugerencias:</span>
       </span>
@@ -39,7 +40,7 @@ export const AiSuggestedQuestions: FC<AiSuggestedQuestionsProps> = ({
           type="button"
           disabled={disabled}
           onClick={() => onSelectQuestion(q)}
-          className="text-[11px] px-3 py-1 rounded-full bg-crypto-surface-raised hover:bg-crypto-surface-hover hover:border-crypto-accent/40 text-crypto-text-secondary hover:text-crypto-text border border-crypto-border transition-all disabled:opacity-50 text-left"
+          className="text-xs sm:text-[11px] px-3 py-1.5 sm:py-1 rounded-full bg-crypto-surface-raised hover:bg-crypto-surface-hover hover:border-crypto-accent/40 text-crypto-text-secondary hover:text-crypto-text border border-crypto-border transition-all disabled:opacity-50 text-left whitespace-nowrap flex-shrink-0 sm:flex-shrink"
         >
           {q}
         </button>

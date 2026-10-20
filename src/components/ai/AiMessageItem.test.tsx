@@ -78,4 +78,22 @@ describe("AiMessageItem Component", () => {
     expect(html).toContain("Modo Degradado");
     expect(html).toContain("deterministic-fallback");
   });
+
+  it("aplica tipografía de 15-16px, ancho extendido y soporte de ruptura de palabras para legibilidad móvil", () => {
+    const longMessage: AiChatMessage = {
+      id: "msg-responsive",
+      role: "model",
+      text: "Explicación detallada con un hash muy largo `0x1234567890abcdef1234567890abcdef12345678` sin desbordamiento.",
+      timestamp: 1770000000000,
+    };
+
+    const html = renderToString(<AiMessageItem message={longMessage} />);
+    // Tipografía cómoda para lectura en móvil (15px mínimo)
+    expect(html).toContain("text-[15px]");
+    // Ancho del 94% para aprovechar pantalla móvil
+    expect(html).toContain("max-w-[94%]");
+    // Ruptura de palabras y código para evitar scroll horizontal
+    expect(html).toContain("break-words");
+    expect(html).toContain("break-all");
+  });
 });

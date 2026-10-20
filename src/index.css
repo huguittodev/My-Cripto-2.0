@@ -79,3 +79,12 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(var(--crypto-border-hover), 1);
 }
+
+/* Ocultar barra de desplazamiento en chips horizontales táctiles */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
