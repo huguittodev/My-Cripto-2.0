@@ -4,9 +4,15 @@
 import { GoogleGenAI } from '@google/genai';
 import { AiProviderError } from './aiProviderInterface.mjs';
 
-// Modelos por defecto validados para el SDK oficial
-export const PRIMARY_DEFAULT_MODEL = 'gemini-flash-lite-latest';
-export const FALLBACK_MODELS = ['gemini-2.5-flash-lite', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+// Modelos por defecto validados y activos para el SDK oficial
+export const PRIMARY_DEFAULT_MODEL = 'gemini-3.5-flash';
+export const FALLBACK_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest',
+];
 export const DEFAULT_TIMEOUT_MS = 14000;
 
 /**
@@ -37,7 +43,20 @@ export function extractRetryAfterSeconds(err) {
   if (!err || typeof err !== 'object') return null;
 
   // Busca en los detalles de QuotaFailure / RetryInfo de Google RPC
-  const details = err.details || err.errorDetails;
+  let details = err.details || err.errorDetails;
+
+  // Si el mensaje es una cadena JSON devuelta por el SDK de Google GenAI
+  if (!details && typeof err.message === 'string' && err.message.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(err.message);
+      if (parsed?.error?.details) {
+        details = parsed.error.details;
+      }
+    } catch {
+      // Ignora fallos de parseo si no es JSON válido
+    }
+  }
+
   if (Array.isArray(details)) {
     for (const item of details) {
       if (item && item['@type']?.includes('RetryInfo') && item.retryDelay) {
@@ -70,8 +89,22 @@ export function classifyGeminiError(err) {
     return err;
   }
 
-  const message = err?.message || String(err);
-  const status = Number(err?.status || err?.statusCode || 500);
+  let message = err?.message || String(err);
+  let status = Number(err?.status || err?.statusCode || 500);
+
+  // Parsea el payload de error si @google/genai encapsuló la respuesta en formato JSON
+  if (typeof message === 'string' && message.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(message);
+      if (parsed?.error) {
+        if (parsed.error.code) status = Number(parsed.error.code);
+        if (parsed.error.message) message = parsed.error.message;
+      }
+    } catch {
+      // Mantiene los valores de fallback si el JSON es defectuoso
+    }
+  }
+
   const retryAfter = extractRetryAfterSeconds(err);
 
   // 1. Timeout de solicitud
@@ -105,25 +138,40 @@ export function classifyGeminiError(err) {
   }
 
   // 3. Cuota agotada o limitación de tasa (Rate Limit / Quota)
-  if (status === 429 || message.includes('RESOURCE_EXHAUSTED') || message.includes('quota')) {
-    // Si la espera es mayor a 60 segundos (cuota diaria agotada), no se debe reintentar en bucle
-    const isDailyQuotaExhausted = retryAfter !== null && retryAfter > 60;
+  if (
+    status === 429 ||
+    message.includes('RESOURCE_EXHAUSTED') ||
+    message.includes('quota') ||
+    message.includes('Quota exceeded')
+  ) {
+    // Si la espera es mayor a 60 segundos o es cuota diaria por proyecto/modelo, se marca como no reintentable en el mismo modelo
+    const isDailyQuotaExhausted =
+      (retryAfter !== null && retryAfter > 60) ||
+      message.includes('GenerateRequestsPerDay') ||
+      message.includes('FreeTier');
+
     return new AiProviderError(
       isDailyQuotaExhausted
         ? 'Se ha agotado la cuota diaria del modelo en la API de Gemini (Free Tier). Por favor, intenta más tarde o utiliza un modelo alternativo.'
         : 'Se ha alcanzado el límite temporal de consultas en la API de Gemini (Rate Limit). Espera unos segundos antes de reintentar.',
       'QUOTA_EXCEEDED',
       429,
-      !isDailyQuotaExhausted, // Solo reintentable si es rate limit de corta duración
+      !isDailyQuotaExhausted, // Solo reintentable en el mismo modelo si es rate limit de corta duración
       retryAfter,
       message
     );
   }
 
-  // 4. Modelo no disponible o no encontrado (404)
-  if (status === 404 || message.includes('not found') || message.includes('no longer available')) {
+  // 4. Modelo no disponible, no encontrado o incompatible con generateContent (404 / incompatibilidad de streaming)
+  if (
+    status === 404 ||
+    message.includes('not found') ||
+    message.includes('no longer available') ||
+    message.includes('only supports real-time bidirectional') ||
+    message.includes('not supported for generateContent')
+  ) {
     return new AiProviderError(
-      'El modelo especificado de Gemini no está disponible o ha sido deprecado.',
+      'El modelo especificado de Gemini no está disponible, ha sido deprecado o no admite consultas de texto estándar.',
       'MODEL_NOT_FOUND',
       404,
       false,
@@ -149,12 +197,18 @@ export function classifyGeminiError(err) {
     );
   }
 
-  // 6. Errores de servidor de Google (500, 502, 503, etc. - Reintentables)
-  if (status >= 500 && status < 600) {
+  // 6. Errores de servidor de Google (500, 502, 503, sin capacidad en modelo - Reintentables)
+  if (
+    (status >= 500 && status < 600) ||
+    message.includes('UNAVAILABLE') ||
+    message.includes('No capacity available') ||
+    message.includes('overloaded')
+  ) {
+    const effectiveStatus = status >= 500 && status < 600 ? status : 503;
     return new AiProviderError(
-      `Los servidores de Google Gemini experimentan dificultades temporales (HTTP ${status}).`,
+      `Los servidores de Google Gemini experimentan dificultades temporales (HTTP ${effectiveStatus}).`,
       'SERVER_ERROR',
-      status,
+      effectiveStatus,
       true,
       retryAfter,
       message

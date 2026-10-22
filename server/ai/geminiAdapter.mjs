@@ -113,16 +113,30 @@ export async function generateAnalystResponse({
         throw lastError;
       }
 
-      // Si es un error de cliente (400) o no está permitido fallback, lanzar de inmediato
-      if (lastError.statusCode === 400 || !allowModelFallback || clientOverride) {
+      // Si es un error de cliente (400) que no sea por incompatibilidad de modelo, lanzar de inmediato
+      if (lastError.statusCode === 400 && lastError.code !== 'MODEL_NOT_FOUND') {
         throw lastError;
       }
 
-      // Si el modelo falló por cuota diaria (429 no reintentable) o modelo no encontrado (404), prueba el siguiente modelo
+      // Si no se permite fallback entre modelos o hay un cliente mock inyectado, lanzar de inmediato
+      if (!allowModelFallback || clientOverride) {
+        throw lastError;
+      }
+
+      // Si el modelo falló por:
+      // - Modelo no encontrado o no soportado (404 / MODEL_NOT_FOUND)
+      // - Cuota agotada (429 / QUOTA_EXCEEDED)
+      // - Timeout de solicitud (504 / REQUEST_TIMEOUT)
+      // - Error transitorio de servidor / falta de capacidad (500, 502, 503 / SERVER_ERROR)
+      // Se permite probar el siguiente modelo de la lista de fallbacks
       const canTryNextModel =
         lastError.code === 'MODEL_NOT_FOUND' ||
-        (lastError.code === 'QUOTA_EXCEEDED' && !lastError.retryable) ||
-        lastError.code === 'REQUEST_TIMEOUT';
+        lastError.code === 'QUOTA_EXCEEDED' ||
+        lastError.code === 'REQUEST_TIMEOUT' ||
+        lastError.code === 'SERVER_ERROR' ||
+        lastError.statusCode === 503 ||
+        lastError.statusCode === 502 ||
+        lastError.statusCode === 500;
 
       if (!canTryNextModel) {
         throw lastError;
